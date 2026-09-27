@@ -1,0 +1,26 @@
+<mat-toolbar class="custom-toolbar">
+  
+  <button 
+    mat-icon-button 
+    aria-label="Open"
+    [disabled]="false"
+    (click)="onOpen()">
+    <img src="icons/open.png" alt="Open" class="toolbar-icon" />
+  </button>
+
+  <button 
+    mat-icon-button 
+    aria-label="Play"
+    [disabled]="false"
+    (click)="onPlay()">
+    <img src="icons/play.png" alt="Play" class="toolbar-icon" />
+  </button>
+
+  <button 
+    mat-icon-button 
+    aria-label="Stop"
+    [disabled]="false"
+    (click)="onStop()">
+    <img src="icons/stop.png" alt="Stop" class="toolbar-icon" />
+  </button>
+</mat-toolbar>

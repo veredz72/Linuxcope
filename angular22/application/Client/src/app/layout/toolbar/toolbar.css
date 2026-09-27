@@ -1,0 +1,27 @@
+/* Gradient background */
+.custom-toolbar {
+  background: 
+    radial-gradient(ellipse at 85% 50%, rgba(20, 110, 135, 0.45) 0%, transparent 60%),
+    radial-gradient(ellipse at 15% 40%, rgba(12, 65, 80, 0.6) 0%, transparent 50%),
+    linear-gradient(90deg, #093744 0%, #0d4b5c 50%, #0a3d4b 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.custom-toolbar button,
+.custom-toolbar mat-icon {
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toolbar-icon {
+  width: 34px;
+  height: 34px;
+  max-width: 34px;
+  max-height: 34px;
+  object-fit: contain;
+  display: block;
+  margin: auto;
+}
