@@ -18,4 +18,8 @@ export class Toolbar {
   onStop(): void {
     console.log('Stop button clicked');
   }
+
+  onOpen(): void {
+    console.log('Open button clicked');
+  }
 }

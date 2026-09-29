@@ -1,8 +1,9 @@
 import { Component, signal } from '@angular/core';
 import { Toolbar } from './layout/toolbar/toolbar';
+import { Dashboard } from './layout/dashboard/dashboard';
 
 @Component({
-  imports: [Toolbar],
+  imports: [Toolbar, Dashboard],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
