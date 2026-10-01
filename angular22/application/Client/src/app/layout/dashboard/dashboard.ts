@@ -16,20 +16,31 @@ export class Dashboard {
 // import { Chart, ScatterController, PointElement, LineElement, LinearScale, Tooltip, Legend } from 'chart.js';
 // Chart.register(ScatterController, PointElement, LineElement, LinearScale, Tooltip, Legend);
 
-public readonly yCategories: string[] = ['T1', 'T2', 'T3', 'T4', 'T5'];
+public readonly yCategories: string[] = ['','TMR1', 'TMR2', 'T1Isr', 'T2Isr',''];
 public chartData: ChartData<'scatter'> = {
   datasets: [
     {
-      label: 'Connected Scatter Path',
+      label: '',
       data: [
-        { x: 1, y: 1 },
-        { x: 3, y: 1 },
+        { x: 50, y: 1 },
+        { x: 550, y: 1 },
          { x: null, y: null },
-        { x: 6, y: 2 },
-        { x: 8, y: 2 },
+         { x: 950, y: 1 },
+        { x: 1450, y: 1 },
         { x: null, y: null },
-        { x: 10, y: 1},
-        { x: 12, y: 1 }
+        { x: 400, y: 2 },
+        { x: 600, y: 2 },
+        { x: null, y: null },
+        { x: 800, y: 2 },
+        { x: 1000, y: 2 },
+        { x: null, y: null },
+        { x: 45, y: 3},
+        { x: null, y: null },
+        { x: 795, y: 4},
+        { x: null, y: null },
+        { x: 945, y: 3},
+        { x: null, y: null },
+        { x: 395, y: 4},
       ],
       // 1. Enable the line
       showLine: true,
@@ -54,23 +65,30 @@ public chartData: ChartData<'scatter'> = {
       y: {
         type: 'linear',
         // Pin limits to prevent points on the edge from being cut off
-        min: -0.5,
-        max: this.yCategories.length - 0.5,
+        min: 0,
+        max: this.yCategories.length -1,
         ticks: {
           stepSize: 1,
           // 2. Map numeric indices back to readable strings on the axis
           callback: (value) => {
+            console.log (value);
             const index = Number(value);
-            return this.yCategories[index] ?? '';
+            return this.yCategories[index]; // Return the corresponding string label for the index';
           }
+        },
+        grid: {
+          color: '#cac8c8', // X-axis grid lines
         }
       },
       x: {
         type: 'linear', // Use a linear scale for the x-axis
         min: 0,
-        max: 32,
+        max: 3000,  // [msec] Set the maximum value for the x-axis
         ticks: {
-          stepSize: 1 // Set the step size for the x-axis ticks
+          stepSize: 100 // Set the step size for the x-axis ticks
+        },
+        grid: {
+          color: '#cac8c8', // X-axis grid lines
         }
       }
     }
