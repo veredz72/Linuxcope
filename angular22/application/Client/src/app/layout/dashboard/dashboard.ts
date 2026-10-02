@@ -2,69 +2,6 @@ import { Component } from '@angular/core';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartData, ChartType, Plugin } from 'chart.js';
 
-// 1. Define custom plugin (e.g., drawing a vertical reference line or watermark)
-const timingHighlightPlugin: Plugin = {
-  id: 'timingHighlight',
-    /*beforeDraw: (chart) => {
-      const { ctx, chartArea: { top, bottom }, scales: { x } } = chart;
-      if (!x) return;
-
-      // Example: Highlight region between 400ms and 600ms
-      const startX = x.getPixelForValue(400);
-      const endX = x.getPixelForValue(600);
-
-      ctx.save();
-      ctx.fillStyle = 'rgba(239, 68, 68, 0.1)';
-      ctx.fillRect(startX, top, endX - startX, bottom - top);
-      ctx.restore();
-    }*/
-   // 1. Capture mouse movement and leave events
-  afterEvent: (chart, args) => {
-    const { event } = args;
-    const { chartArea } = chart;
-    const chartState = chart as any;
-
-    if (!chartArea) return;
-
-    if (event.type === 'mousemove') {
-      // Check if mouse is within chart boundaries
-      if (event.x != null && event.y != null &&
-        event.x >= chartArea.left &&
-        event.x <= chartArea.right &&
-        event.y >= chartArea.top &&
-        event.y <= chartArea.bottom
-      ) {
-        chartState.cursorX = event.x;
-      } else {
-        chartState.cursorX = null;
-      }
-      args.changed = true; // Signals Chart.js to re-render
-    } else if (event.type === 'mouseout') {
-      chartState.cursorX = null;
-      args.changed = true;
-    }
-  },
-
-  // 2. Draw the vertical line on the canvas
-  afterDraw: (chart) => {
-    const chartState = chart as any;
-    const { ctx, chartArea: { top, bottom } } = chart;
-
-    if (chartState.cursorX != null) {
-      ctx.save();
-      ctx.beginPath();
-      ctx.strokeStyle = '#ef4444'; // Line color (e.g. red)
-      ctx.lineWidth = 1.5;         // Line thickness
-      //ctx.setLineDash([4, 4]);     // Dashed line (remove for solid line)
-
-      ctx.moveTo(chartState.cursorX, top);
-      ctx.lineTo(chartState.cursorX, bottom);
-      ctx.stroke();
-      ctx.restore();
-    }
-  }
-};
-
 @Component({
   imports: [BaseChartDirective],
   selector: 'app-dashboard',
@@ -75,7 +12,7 @@ export class Dashboard {
   public chartType: ChartType = 'line';
 
   // Expose the plugin to the template
-  public chartPlugins: Plugin[] = [timingHighlightPlugin];
+  
 
   // 2. Add data and point configurations
   // Don't forget to register LineElement if importing tree-shakable elements:
@@ -117,9 +54,9 @@ public chartData: ChartData<'scatter'> = {
       tension: 0, // 0 for straight segments; 0.2-0.4 for smooth bezier curves
 
       // 3. Dot (marker) appearance
-      backgroundColor: '#ef4444',
-      pointRadius: 5,
-      pointHoverRadius: 7
+      backgroundColor: '#2563eb',
+      pointRadius: 3,
+      pointHoverRadius: 5
     }
   ]
 };
@@ -148,7 +85,7 @@ public chartData: ChartData<'scatter'> = {
         min: 0,
         max: 3000,  // [msec] Set the maximum value for the x-axis
         ticks: {
-          stepSize: 100 // Set the step size for the x-axis ticks
+          stepSize: 500 // Set the step size for the x-axis ticks
         },
         grid: {
           color: '#cac8c8', // X-axis grid lines
@@ -156,4 +93,86 @@ public chartData: ChartData<'scatter'> = {
       }
     }
   };
+
+  private mouseClicked : number = 0;
+  private fromX : number = 0;
+  private toX : number = 0;
+
+  public timingHighlightPlugin: Plugin = {
+    id: 'timingHighlight',
+    
+    afterEvent: (chart, args) => {
+      const { event } = args;
+      const { chartArea } = chart;
+      const chartState = chart as any;
+
+      if (!chartArea) return;
+
+      if (event.type === 'mousemove') {
+        // Check if mouse is within chart boundaries
+        if (event.x != null && event.y != null &&
+          event.x >= chartArea.left &&
+          event.x <= chartArea.right &&
+          event.y >= chartArea.top &&
+          event.y <= chartArea.bottom
+        ) {
+          chartState.cursorX = event.x;
+        } else {
+          chartState.cursorX = null;
+        }
+        args.changed = true; // Signals Chart.js to re-render
+      } 
+      else if (event.type === 'mouseout') 
+      {
+        chartState.cursorX = null;
+        args.changed = true;
+      }
+      else if (event.type === 'click')
+      {
+        this.mouseClicked++;
+
+        if (this.mouseClicked==1)
+          this.fromX = chartState.cursorX;
+        else if (this.mouseClicked==2)
+          this.toX = chartState.cursorX;
+        else 
+          this.mouseClicked= 0;
+      }
+    },
+
+    // 2. Draw the vertical line on the canvas
+    afterDraw: (chart) => {
+      const chartState = chart as any;
+      const { ctx, chartArea: { top, bottom } } = chart;
+
+      if (chartState.cursorX != null) {
+        this.drawLine (ctx, chartState.cursorX, top, chartState.cursorX, bottom, '#ef4444', 1.5, false);
+      }
+
+      if (this.mouseClicked>=1 && this.fromX != null) {
+        this.drawLine (ctx, this.fromX, top, this.fromX, bottom, '#e67e22', 1.5, true);
+      }
+
+      if (this.mouseClicked==2 && this.fromX != null) {
+        this.drawLine (ctx, this.toX, top, this.toX, bottom, '#0288d1', 1.5, true);
+      }
+    }
+  }
+
+  public chartPlugins: Plugin[] = [this.timingHighlightPlugin];
+
+  private drawLine (ctx : any, fromX : number, fromY: number, toX : number, toY : number, color : string, width : number, dash : boolean)
+  {
+    ctx.save();
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    if (dash==true)
+      ctx.setLineDash([4, 4]);
+    ctx.moveTo(fromX, fromY);
+    ctx.lineTo(toX, toY);
+    ctx.stroke();
+    ctx.restore();
+  }
+
 }
