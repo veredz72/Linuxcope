@@ -8,5 +8,5 @@ INSTALL := ../../install
 all:
 	make -I../common -C $(KERNELDIR) M=$(PWD)
 clean:
-	rm -f tio.mod.c *.ko modules.order Module.symvers Module.markers *.o
+	rm -f Tio.mod Tio.mod.c *.ko modules.order Module.symvers Module.markers *.o .*.cmd
 

@@ -6,6 +6,7 @@
 #include <linux/wait.h>
 #include <linux/sched.h>
 #include <linux/cdev.h>
+#include <linux/device.h>
 #include <linux/platform_device.h>
 
 MODULE_LICENSE("Dual BSD/GPL");
@@ -110,6 +111,7 @@ static int TioInit(void)
 		return -1;
 	}
 	
+	pCharClass = class_create(THIS_MODULE, CLASS_NAME);
 	if (IS_ERR(pCharClass))
 	{
 		printk("TioInit: class_create failed rc=%ld\n",PTR_ERR(pCharClass));

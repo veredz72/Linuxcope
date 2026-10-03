@@ -8,5 +8,7 @@ Module.symvers
 .*.mod.o.cmd
 .Module.symvers.cmd
 .*.ko.cmd
+*.ko
+
 node_modules/
 
