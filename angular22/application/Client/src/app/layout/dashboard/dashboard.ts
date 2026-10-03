@@ -2,6 +2,12 @@ import { Component } from '@angular/core';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartData, ChartType, Plugin } from 'chart.js';
 
+enum MarkerState {
+  Undefined,  // 0
+  FromX,    // 1
+  ToX,  // 2
+}
+
 @Component({
   imports: [BaseChartDirective],
   selector: 'app-dashboard',
@@ -74,7 +80,6 @@ public chartData: ChartData<'scatter'> = {
           stepSize: 1,
           // 2. Map numeric indices back to readable strings on the axis
           callback: (value) => {
-            console.log (value);
             const index = Number(value);
             return this.yCategories[index]; // Return the corresponding string label for the index';
           }
@@ -94,7 +99,7 @@ public chartData: ChartData<'scatter'> = {
     }
   };
 
-  private mouseClicked : number = 0;
+  private markerState : MarkerState = MarkerState.Undefined;
   private fromX : number = 0;
   private toX : number = 0;
 
@@ -129,14 +134,21 @@ public chartData: ChartData<'scatter'> = {
       }
       else if (event.type === 'click')
       {
-        this.mouseClicked++;
-
-        if (this.mouseClicked==1)
+        if (this.markerState == MarkerState.Undefined)
+        {
+          this.markerState = MarkerState.FromX;
           this.fromX = chartState.cursorX;
-        else if (this.mouseClicked==2)
+        }
+        else if (this.markerState == MarkerState.FromX)
+        {
           this.toX = chartState.cursorX;
-        else 
-          this.mouseClicked= 0;
+          this.markerState = MarkerState.ToX;
+          //Display the time difference between the two markers
+        }
+        else if (this.markerState == MarkerState.ToX)
+        {
+          this.markerState = MarkerState.Undefined;
+        }
       }
     },
 
@@ -145,15 +157,18 @@ public chartData: ChartData<'scatter'> = {
       const chartState = chart as any;
       const { ctx, chartArea: { top, bottom } } = chart;
 
+      //draw cursor line
       if (chartState.cursorX != null) {
         this.drawLine (ctx, chartState.cursorX, top, chartState.cursorX, bottom, '#ef4444', 1.5, false);
       }
 
-      if (this.mouseClicked>=1 && this.fromX != null) {
+      //draw 'from' line 
+      if (this.markerState==MarkerState.FromX || this.markerState==MarkerState.ToX) {
         this.drawLine (ctx, this.fromX, top, this.fromX, bottom, '#e67e22', 1.5, true);
       }
 
-      if (this.mouseClicked==2 && this.fromX != null) {
+      //draw 'to' line
+      if (this.markerState==MarkerState.ToX) {
         this.drawLine (ctx, this.toX, top, this.toX, bottom, '#0288d1', 1.5, true);
       }
     }
