@@ -1,1 +1,12 @@
+*.o
+modules.order
+Module.symvers
+*.mod
+*.mod.c
+*.mod.o
+.*.mod.cmd
+.*.mod.o.cmd
+.Module.symvers.cmd
+.*.ko.cmd
 node_modules/
+
