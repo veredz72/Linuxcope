@@ -9,6 +9,9 @@ Module.symvers
 .Module.symvers.cmd
 .*.ko.cmd
 *.ko
+*.out
 
 node_modules/
+release/
+x86_64-redhat-linux/
 
