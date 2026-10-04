@@ -3,10 +3,19 @@
 #include <unistd.h>
 
 #include "Tio.h"
+#include "Linuxcope.h"
 
 /***************************************************************/
 void* Timer0(void* arg) 
 {
+	int rc=0;
+	
+	rc=LinuxcopeOpen (0, "Timer0");
+	if (rc!=LINUXCOPE_OK)
+	{
+		printf ("LinuxcopeOpen failed\n");
+		return NULL;
+	}	
 	while(1)
 	{
 		TioWaitForInterrupt (0, 1000);
@@ -17,6 +26,15 @@ void* Timer0(void* arg)
 /***************************************************************/
 void* Timer1(void* arg) 
 {
+	int rc=0;
+	
+	rc=LinuxcopeOpen (1, "Timer1");
+	if (rc!=LINUXCOPE_OK)
+	{
+		printf ("LinuxcopeOpen failed\n");
+		return NULL;
+	}
+	
 	while(1)
 	{
 		TioWaitForInterrupt (1, 1000);
@@ -39,13 +57,13 @@ int main(void)
 	
 	rc = pthread_create(&thread0, NULL, Timer0, NULL);
     	if (rc != 0) {
-        	fprintf(stderr, "pthread_create failed: %s\n", strerror(rc));
+        	fprintf(stderr, "pthread_create failed\n");
         	return -1;
     	}
     	
     	rc = pthread_create(&thread1, NULL, Timer1, NULL);
     	if (rc != 0) {
-        	fprintf(stderr, "pthread_create failed: %s\n", strerror(rc));
+        	fprintf(stderr, "pthread_create failed\n");
         	return -1;
     	}
     	

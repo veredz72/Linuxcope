@@ -6,6 +6,7 @@ OBJS 		= $(TARGET)/Main.o\
 
 CC = gcc
 INCLUDES 	= -I../../library/Tio\
+	          -I../../library/Linuxcope
 
 CFLAGS		= -g $(INCLUDES) 
 
@@ -32,5 +33,7 @@ $(TARGET)/Main.o: Main.c
 
 clean:
 	make -C ../../library/Tio clean
+	make -C ../../driver/Tio clean
+	make -C ../../driver/Linuxcope clean
 	make -C ../../library/Linuxcope clean
 	rm -Rf $(TARGET)

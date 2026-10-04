@@ -29,7 +29,7 @@ int LinuxcopeOpen (int Instance, char *ThreadName)
 	if (rc != 0)
 		return LINUXCOPE_IOCTL_FAILED;
 
-	
+	printf ("Request.Id=%d\n",Request.Id);
 	return LINUXCOPE_OK;
 }
 

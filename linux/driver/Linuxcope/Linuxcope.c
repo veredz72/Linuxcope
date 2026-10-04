@@ -14,26 +14,45 @@ MODULE_LICENSE("Dual BSD/GPL");
 #define DEVICE_NAME "linuxcope"
 #define CLASS_NAME "linuxcope"
 
+#define EVENT_NAME_LENGTH     8
+
+typedef struct EVENT_TABLE
+{
+	char Name[EVENT_NAME_LENGTH];
+	u32  Id;
+}EVENT_TABLE;
+
+static u32 sTableEntryId = 0;
+static EVENT_TABLE sEventTable[32];
+static spinlock_t sTableLock;
+static spinlock_t sLogLock;
 
 /*********************************************************************************/
 static long LinuxcopeIoctl (struct file *file,unsigned int IoctlCode,unsigned long IoctlParam)
 {
-	/*WAIT_FOR_INTERRUPT_REQUEST WaitForInterruptRequest;
+	OPEN_EVENT_REQUEST OpenEventRequest;
+	LOG_EVENT_REQUEST LogEventRequest;
 	int rc;
-	u32 IntId;
-
-	//printk("--> TioIoctl\n");
 
 	switch (IoctlCode)
 	{
-	case WAIT_FOR_INTERRUPT_REQUEST_CODE:
-		rc = copy_from_user(&WaitForInterruptRequest, (void*)IoctlParam, sizeof(WAIT_FOR_INTERRUPT_REQUEST));
-		IntId = WaitForInterruptRequest.Interrupt;
-		wait_event_interruptible(sWaitQueue[IntId], sInterruptFlag[IntId] != 0);
-		sInterruptFlag[IntId] = 0;
-
+	case OPEN_EVENT_REQUEST_CODE:
+		rc = copy_from_user(&OpenEventRequest, (void*)IoctlParam, sizeof(OPEN_EVENT_REQUEST));
+		//Add event to table 
+		spin_lock(&sTableLock); //Enter critical section
+		memcpy (sEventTable[sTableEntryId].Name, OpenEventRequest.Name, EVENT_NAME_LENGTH);		
+		OpenEventRequest.Id = sTableEntryId; 
+		sTableEntryId++;
+		spin_unlock(&sTableLock); //Exit critical section
 		break;
-	}*/
+	
+	case LOG_EVENT_REQUEST_CODE:
+		rc = copy_from_user(&LogEventRequest, (void*)IoctlParam, sizeof(LOG_EVENT_REQUEST));
+		spin_lock(&sLogLock); //Enter critical section
+		
+		spin_unlock(&sLogLock); //Exit critical section
+		break;
+	}
 	
 	return 0;
 }
@@ -92,6 +111,9 @@ static int LinuxcopeInit(void)
 		unregister_chrdev(Major, DEVICE_NAME);
 		return PTR_ERR(pCharClass);
 	}
+	
+	spin_lock_init(&sTableLock);
+	spin_lock_init(&sLogLock);
 	
  	return 0;
 }
