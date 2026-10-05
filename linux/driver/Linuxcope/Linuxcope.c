@@ -22,10 +22,13 @@ typedef struct EVENT_TABLE
 	u32  Id;
 }EVENT_TABLE;
 
-static u32 sTableEntryId = 0;
+static int sTableEntryId = 0;
 static EVENT_TABLE sEventTable[32];
 static spinlock_t sTableLock;
 static spinlock_t sLogLock;
+int sMajorNumber;
+struct class *sCharClass;
+struct device *sCharDevice;
 
 /*********************************************************************************/
 static long LinuxcopeIoctl (struct file *file,unsigned int IoctlCode,unsigned long IoctlParam)
@@ -40,10 +43,11 @@ static long LinuxcopeIoctl (struct file *file,unsigned int IoctlCode,unsigned lo
 		rc = copy_from_user(&OpenEventRequest, (void*)IoctlParam, sizeof(OPEN_EVENT_REQUEST));
 		//Add event to table 
 		spin_lock(&sTableLock); //Enter critical section
+		sTableEntryId++;
 		memcpy (sEventTable[sTableEntryId].Name, OpenEventRequest.Name, EVENT_NAME_LENGTH);		
 		OpenEventRequest.Id = sTableEntryId; 
-		sTableEntryId++;
 		spin_unlock(&sTableLock); //Exit critical section
+		rc=copy_to_user((void*)IoctlParam, &OpenEventRequest, sizeof(OPEN_EVENT_REQUEST));
 		break;
 	
 	case LOG_EVENT_REQUEST_CODE:
@@ -51,6 +55,12 @@ static long LinuxcopeIoctl (struct file *file,unsigned int IoctlCode,unsigned lo
 		spin_lock(&sLogLock); //Enter critical section
 		
 		spin_unlock(&sLogLock); //Exit critical section
+		break;
+
+	case RESET_TABLE_REQUEST_CODE:
+		spin_lock(&sTableLock); //Enter critical section
+		sTableEntryId = 0;
+		spin_unlock(&sTableLock); //Exit critical section
 		break;
 	}
 	
@@ -85,31 +95,29 @@ static struct file_operations sDrvOperations =
 /**********************************************************************************/
 static int LinuxcopeInit(void)
 {
-	int Major;
-	struct class *pCharClass;
-	struct device *pCharDevice;
+	
 
-	Major=register_chrdev(0, "linuxcope", &sDrvOperations);
-	if (Major < 0)
+	sMajorNumber=register_chrdev(0, "linuxcope", &sDrvOperations);
+	if (sMajorNumber < 0)
 	{
 		printk("LinuxcopeInit: register_chrdev failed\n");
 		return -1;
 	}
 	
-	pCharClass = class_create(THIS_MODULE, CLASS_NAME);
-	if (IS_ERR(pCharClass))
+	sCharClass = class_create(THIS_MODULE, CLASS_NAME);
+	if (IS_ERR(sCharClass))
 	{
-		printk("TioInit: class_create failed rc=%ld\n",PTR_ERR(pCharClass));
-		unregister_chrdev(Major, DEVICE_NAME);
-		return PTR_ERR(pCharClass);
+		printk("TioInit: class_create failed rc=%ld\n",PTR_ERR(sCharClass));
+		unregister_chrdev(sMajorNumber, DEVICE_NAME);
+		return PTR_ERR(sCharClass);
 	}
 
-	pCharDevice = device_create(pCharClass, NULL, MKDEV(Major, 0), NULL, DEVICE_NAME);
-	if (IS_ERR(pCharDevice))
+	sCharDevice = device_create(sCharClass, NULL, MKDEV(sMajorNumber, 0), NULL, DEVICE_NAME);
+	if (IS_ERR(sCharDevice))
 	{
-		printk("TioInit: device_create failed rc=%ld\n",PTR_ERR(pCharDevice));
-		unregister_chrdev(Major, DEVICE_NAME);
-		return PTR_ERR(pCharClass);
+		printk("TioInit: device_create failed rc=%ld\n",PTR_ERR(sCharDevice));
+		unregister_chrdev(sMajorNumber, DEVICE_NAME);
+		return PTR_ERR(sCharClass);
 	}
 	
 	spin_lock_init(&sTableLock);
@@ -121,7 +129,10 @@ static int LinuxcopeInit(void)
 /**********************************************************************************/
 static void LinuxcopeExit(void)
 {
-	
+	device_destroy(sCharClass, MKDEV(sMajorNumber, 0));
+	class_destroy(sCharClass);
+	unregister_chrdev(sMajorNumber, DEVICE_NAME);
+	printk(KERN_INFO "Linuxcope: Module unloaded successfully\n");
 	 	
 }
 

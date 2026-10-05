@@ -37,3 +37,4 @@ clean:
 	make -C ../../driver/Linuxcope clean
 	make -C ../../library/Linuxcope clean
 	rm -Rf $(TARGET)
+	rm Main.out

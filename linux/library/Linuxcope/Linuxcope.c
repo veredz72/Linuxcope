@@ -47,3 +47,15 @@ int LinuxcopeLogEvent (int Instance,int Value)
 	return LINUXCOPE_OK;
 }
 
+/**********************************************************************************/
+int LinuxcopeResetTable (int Instance)
+{
+	int rc;
+
+	rc = ioctl (sHandle[Instance], RESET_TABLE_REQUEST_CODE, NULL);
+	if (rc != 0)
+		return LINUXCOPE_IOCTL_FAILED;
+
+	return LINUXCOPE_OK; 
+}
+
