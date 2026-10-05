@@ -7,6 +7,7 @@
 #include <linux/sched.h>
 #include <linux/cdev.h>
 #include <linux/device.h>
+#include <linux/slab.h>
 #include <linux/platform_device.h>
 
 MODULE_LICENSE("Dual BSD/GPL");
@@ -16,26 +17,41 @@ MODULE_LICENSE("Dual BSD/GPL");
 
 #define EVENT_NAME_LENGTH     8
 
-typedef struct EVENT_TABLE
-{
-	char Name[EVENT_NAME_LENGTH];
+typedef struct EVENT_DESC {
+    char Name[EVENT_NAME_LENGTH];
 	u32  Id;
-}EVENT_TABLE;
+	struct list_head node;
+}EVENT_DESC;
 
-static int sTableEntryId = 0;
-static EVENT_TABLE sEventTable[32];
 static spinlock_t sTableLock;
 static spinlock_t sLogLock;
 int sMajorNumber;
 struct class *sCharClass;
 struct device *sCharDevice;
 
+static LIST_HEAD(sEventList);
+
+/*********************************************************************************/
+static inline int list_count_nodes(const struct list_head *head)
+{
+    const struct list_head *pos;
+    int count = 0;
+
+    list_for_each(pos, head)
+        count++;
+
+    return count;
+}
+
 /*********************************************************************************/
 static long LinuxcopeIoctl (struct file *file,unsigned int IoctlCode,unsigned long IoctlParam)
 {
 	OPEN_EVENT_REQUEST OpenEventRequest;
 	LOG_EVENT_REQUEST LogEventRequest;
+	struct EVENT_DESC *pEvent;
+
 	int rc;
+	bool Found = false;
 
 	switch (IoctlCode)
 	{
@@ -43,9 +59,29 @@ static long LinuxcopeIoctl (struct file *file,unsigned int IoctlCode,unsigned lo
 		rc = copy_from_user(&OpenEventRequest, (void*)IoctlParam, sizeof(OPEN_EVENT_REQUEST));
 		//Add event to table 
 		spin_lock(&sTableLock); //Enter critical section
-		sTableEntryId++;
-		memcpy (sEventTable[sTableEntryId].Name, OpenEventRequest.Name, EVENT_NAME_LENGTH);		
-		OpenEventRequest.Id = sTableEntryId; 
+		
+		//Scan the list and look for the requested event name 
+		list_for_each_entry(pEvent, &sEventList, node) {
+        	// Process entry without sleeping
+			if (strcmp (pEvent->Name, OpenEventRequest.Name)==0)
+			{
+				Found = true;
+				printk ("Event %s already in list\n",pEvent->Name);
+				break;
+			}
+    	}
+
+		if (Found==false)
+		{
+			//Allocate event descriptor
+			pEvent = kmalloc(sizeof(EVENT_DESC), GFP_KERNEL);
+			//Copy name from request to descriptor
+			memcpy (pEvent->Name, OpenEventRequest.Name, EVENT_NAME_LENGTH);
+			pEvent->Id = list_count_nodes(&sEventList);
+			//Add to the end of the list
+			list_add_tail(&pEvent->node, &sEventList);
+		}
+
 		spin_unlock(&sTableLock); //Exit critical section
 		rc=copy_to_user((void*)IoctlParam, &OpenEventRequest, sizeof(OPEN_EVENT_REQUEST));
 		break;
@@ -55,12 +91,6 @@ static long LinuxcopeIoctl (struct file *file,unsigned int IoctlCode,unsigned lo
 		spin_lock(&sLogLock); //Enter critical section
 		
 		spin_unlock(&sLogLock); //Exit critical section
-		break;
-
-	case RESET_TABLE_REQUEST_CODE:
-		spin_lock(&sTableLock); //Enter critical section
-		sTableEntryId = 0;
-		spin_unlock(&sTableLock); //Exit critical section
 		break;
 	}
 	
@@ -95,8 +125,6 @@ static struct file_operations sDrvOperations =
 /**********************************************************************************/
 static int LinuxcopeInit(void)
 {
-	
-
 	sMajorNumber=register_chrdev(0, "linuxcope", &sDrvOperations);
 	if (sMajorNumber < 0)
 	{
@@ -129,6 +157,9 @@ static int LinuxcopeInit(void)
 /**********************************************************************************/
 static void LinuxcopeExit(void)
 {
+#ifdef FIFO
+	kfifo_free(&sEventFifo);
+#endif
 	device_destroy(sCharClass, MKDEV(sMajorNumber, 0));
 	class_destroy(sCharClass);
 	unregister_chrdev(sMajorNumber, DEVICE_NAME);
