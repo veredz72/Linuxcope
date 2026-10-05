@@ -1,0 +1,17 @@
+*.o
+modules.order
+Module.symvers
+*.mod
+*.mod.c
+*.mod.o
+.*.mod.cmd
+.*.mod.o.cmd
+.Module.symvers.cmd
+.*.ko.cmd
+*.ko
+*.out
+
+node_modules/
+release/
+x86_64-redhat-linux/
+
