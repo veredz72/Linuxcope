@@ -33,6 +33,7 @@ static struct class *sCharClass;
 static struct device *sCharDevice;
 static struct file *sFilp;
 static loff_t sPos;
+static int sRecordControl = 0;
 
 static LIST_HEAD(sEventList);
 
@@ -53,6 +54,7 @@ static long LinuxcopeIoctl (struct file *file,unsigned int IoctlCode,unsigned lo
 {
 	OPEN_EVENT_REQUEST OpenEventRequest;
 	LOG_EVENT_REQUEST LogEventRequest;
+	RECORD_CONTROL_REQUEST RecordControlRequest;
 	struct EVENT_DESC *pEvent;
 	ssize_t bytes;
 
@@ -102,8 +104,31 @@ static long LinuxcopeIoctl (struct file *file,unsigned int IoctlCode,unsigned lo
 
 		spin_unlock(&sLogLock); //Exit critical section
 		break;
+
+	case RECORD_CONTROL_REQUEST_CODE:
+		rc = copy_from_user(&RecordControlRequest, (void*)IoctlParam, sizeof(RECORD_CONTROL_REQUEST));
+		if (RecordControlRequest.Value == 1)
+		{
+			sFilp=filp_open(FILE_PATH, O_CREAT | O_WRONLY | O_TRUNC, 0644);
+			if (IS_ERR(sFilp)) 
+			{
+				printk ("Failed to open %s\n",FILE_PATH);
+			}
+			else
+			{
+				sPos = 0;
+				sRecordControl = 1;
+			}
+		}
+		else
+		{
+			sRecordControl = 0;
+			filp_close (sFilp,NULL);
+		}
+		break;
 	}
 	
+
 	return 0;
 }
 
@@ -158,13 +183,6 @@ static int LinuxcopeInit(void)
 		return PTR_ERR(sCharClass);
 	}
 	
-	sFilp=filp_open(FILE_PATH, O_CREAT | O_WRONLY | O_TRUNC, 0644);
-	if (IS_ERR(sFilp)) 
-	{
-		printk ("Failed to open %s\n",FILE_PATH);
-	}
-	sPos = 0;	
-
 	spin_lock_init(&sTableLock);
 	spin_lock_init(&sLogLock);
 	
@@ -174,8 +192,6 @@ static int LinuxcopeInit(void)
 /**********************************************************************************/
 static void LinuxcopeExit(void)
 {
-	filp_close (sFilp,NULL);
-
 	device_destroy(sCharClass, MKDEV(sMajorNumber, 0));
 	class_destroy(sCharClass);
 	unregister_chrdev(sMajorNumber, DEVICE_NAME);
