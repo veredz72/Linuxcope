@@ -8,6 +8,8 @@
 #include <linux/cdev.h>
 #include <linux/device.h>
 #include <linux/slab.h>
+#include <linux/fs.h>
+#include <linux/uaccess.h>
 #include <linux/platform_device.h>
 
 MODULE_LICENSE("Dual BSD/GPL");
@@ -16,6 +18,7 @@ MODULE_LICENSE("Dual BSD/GPL");
 #define CLASS_NAME "linuxcope"
 
 #define EVENT_NAME_LENGTH     8
+#define FILE_PATH			"/mnt/ramdisk/linuxcope.bin"
 
 typedef struct EVENT_DESC {
     char Name[EVENT_NAME_LENGTH];
@@ -25,9 +28,11 @@ typedef struct EVENT_DESC {
 
 static spinlock_t sTableLock;
 static spinlock_t sLogLock;
-int sMajorNumber;
-struct class *sCharClass;
-struct device *sCharDevice;
+static int sMajorNumber;
+static struct class *sCharClass;
+static struct device *sCharDevice;
+static struct file *sFilp;
+static loff_t sPos;
 
 static LIST_HEAD(sEventList);
 
@@ -49,6 +54,7 @@ static long LinuxcopeIoctl (struct file *file,unsigned int IoctlCode,unsigned lo
 	OPEN_EVENT_REQUEST OpenEventRequest;
 	LOG_EVENT_REQUEST LogEventRequest;
 	struct EVENT_DESC *pEvent;
+	ssize_t bytes;
 
 	int rc;
 	bool Found = false;
@@ -91,6 +97,9 @@ static long LinuxcopeIoctl (struct file *file,unsigned int IoctlCode,unsigned lo
 		rc = copy_from_user(&LogEventRequest, (void*)IoctlParam, sizeof(LOG_EVENT_REQUEST));
 		spin_lock(&sLogLock); //Enter critical section
 		
+		bytes=kernel_write(sFilp, &OpenEventRequest, sizeof(OpenEventRequest), &sPos);
+		printk ("bytes=%ld\n",bytes);
+
 		spin_unlock(&sLogLock); //Exit critical section
 		break;
 	}
@@ -149,6 +158,13 @@ static int LinuxcopeInit(void)
 		return PTR_ERR(sCharClass);
 	}
 	
+	sFilp=filp_open(FILE_PATH, O_CREAT | O_WRONLY | O_TRUNC, 0644);
+	if (IS_ERR(sFilp)) 
+	{
+		printk ("Failed to open %s\n",FILE_PATH);
+	}
+	sPos = 0;	
+
 	spin_lock_init(&sTableLock);
 	spin_lock_init(&sLogLock);
 	
@@ -158,9 +174,8 @@ static int LinuxcopeInit(void)
 /**********************************************************************************/
 static void LinuxcopeExit(void)
 {
-#ifdef FIFO
-	kfifo_free(&sEventFifo);
-#endif
+	filp_close (sFilp,NULL);
+
 	device_destroy(sCharClass, MKDEV(sMajorNumber, 0));
 	class_destroy(sCharClass);
 	unregister_chrdev(sMajorNumber, DEVICE_NAME);
