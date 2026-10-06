@@ -9,7 +9,6 @@ typedef enum E_LINUXCOPE_ERROR_CODE
 }E_LINUXCOPE_ERROR_CODE;
 
 int LinuxcopeOpen (int Instance, char *ThreadName);
-int LinuxcopeResetTable (int Instance);
 int LinuxcopeLogEvent (int Instance,int Value);
 
 

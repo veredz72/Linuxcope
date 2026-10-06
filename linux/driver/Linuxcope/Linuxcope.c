@@ -81,8 +81,9 @@ static long LinuxcopeIoctl (struct file *file,unsigned int IoctlCode,unsigned lo
 			//Add to the end of the list
 			list_add_tail(&pEvent->node, &sEventList);
 		}
-
+		
 		spin_unlock(&sTableLock); //Exit critical section
+		OpenEventRequest.Id =pEvent->Id;
 		rc=copy_to_user((void*)IoctlParam, &OpenEventRequest, sizeof(OPEN_EVENT_REQUEST));
 		break;
 	

@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <errno.h>
+#include <time.h>
 
 #include "Linuxcope.h"
 #include "../../common/LinuxcopeIoctl.h"
@@ -38,24 +39,15 @@ int LinuxcopeLogEvent (int Instance,int Value)
 {
 	LOG_EVENT_REQUEST Request;
 	Request.Value = Value;
+	struct timespec ts;
 	int rc;
 	
+	clock_gettime(CLOCK_REALTIME, &ts);
+
+	Request.Timetag = ts.tv_sec * 1E9 + ts.tv_nsec;
 	rc = ioctl (sHandle[Instance], LOG_EVENT_REQUEST_CODE, &Request);
 	if (rc != 0)
 		return LINUXCOPE_IOCTL_FAILED;
 
 	return LINUXCOPE_OK;
 }
-
-/**********************************************************************************/
-int LinuxcopeResetTable (int Instance)
-{
-	int rc;
-
-	rc = ioctl (sHandle[Instance], RESET_TABLE_REQUEST_CODE, NULL);
-	if (rc != 0)
-		return LINUXCOPE_IOCTL_FAILED;
-
-	return LINUXCOPE_OK; 
-}
-
