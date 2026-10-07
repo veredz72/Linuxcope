@@ -13,6 +13,7 @@ typedef struct OPEN_EVENT_REQUEST
 
 typedef struct LOG_EVENT_REQUEST
 {
+	uint32_t Id;
 	uint32_t Value;
 	uint64_t Timetag;
 }LOG_EVENT_REQUEST;

@@ -21,6 +21,8 @@ pre-build: 	check_objectdir target
 target: $(OBJS)
 	make -C ../../library/Tio
 	make -C ../../library/Linuxcope
+	make -C ../../driver/Tio
+	make -C ../../driver/Linuxcope 
 	$(LD) $(LDFLAGS) $(CFLAGS) $(OBJS) $(LIBS) -o Main.out 
 		
 check_objectdir :
@@ -33,8 +35,8 @@ $(TARGET)/Main.o: Main.c
 
 clean:
 	make -C ../../library/Tio clean
+	make -C ../../library/Linuxcope clean
 	make -C ../../driver/Tio clean
 	make -C ../../driver/Linuxcope clean
-	make -C ../../library/Linuxcope clean
 	rm -Rf $(TARGET)
 	rm Main.out

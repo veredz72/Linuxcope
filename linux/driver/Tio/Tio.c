@@ -42,8 +42,6 @@ static long TioIoctl (struct file *file,unsigned int IoctlCode,unsigned long Ioc
 	int rc;
 	u32 IntId;
 
-	//printk("--> TioIoctl\n");
-
 	switch (IoctlCode)
 	{
 	case WAIT_FOR_INTERRUPT_REQUEST_CODE:
@@ -93,12 +91,11 @@ static void TioTimerCallback (struct timer_list *t)
 	wake_up_interruptible(&sWaitQueue[TmrId]);
 	sInterruptFlag[TmrId] = 1;
 	
-    	chan->tick_count++;
-    	pr_info("Channel %d expired! Tick count: %lu\n",
-            TmrId, chan->tick_count);
+    chan->tick_count++;
+    //pr_info("Channel %d expired! Tick count: %lu\n",TmrId, chan->tick_count);
 
-    	// Re-arm using each channel's independent period */
-    	mod_timer(&chan->timer, jiffies + msecs_to_jiffies(chan->interval_ms));
+    // Re-arm using each channel's independent period */
+    mod_timer(&chan->timer, jiffies + msecs_to_jiffies(chan->interval_ms));
 }
 
 /**********************************************************************************/

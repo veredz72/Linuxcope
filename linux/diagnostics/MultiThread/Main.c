@@ -5,12 +5,15 @@
 #include "Tio.h"
 #include "Linuxcope.h"
 
+#define INSTANCE_0 0
+#define INSTANCE_1 1
+
 /***************************************************************/
 void* Timer0(void* arg) 
 {
 	int rc=0;
 	
-	rc=LinuxcopeOpen (0, "Timer0");
+	rc=LinuxcopeOpen (INSTANCE_0, "Timer0");
 	if (rc!=LINUXCOPE_OK)
 	{
 		printf ("LinuxcopeOpen failed\n");
@@ -19,9 +22,9 @@ void* Timer0(void* arg)
 	while(1)
 	{
 		TioWaitForInterrupt (0, 1000);
-		LinuxcopeLogEvent (0, 0);
+		LinuxcopeLogEvent (INSTANCE_0, 0);
 		printf ("To\n");
-		LinuxcopeLogEvent (0, 1);
+		LinuxcopeLogEvent (INSTANCE_0, 1);
 	}
 }
 
@@ -30,7 +33,7 @@ void* Timer1(void* arg)
 {
 	int rc=0;
 	
-	rc=LinuxcopeOpen (1, "Timer1");
+	rc=LinuxcopeOpen (INSTANCE_1, "Timer1");
 	if (rc!=LINUXCOPE_OK)
 	{
 		printf ("LinuxcopeOpen failed\n");
@@ -40,9 +43,9 @@ void* Timer1(void* arg)
 	while(1)
 	{
 		TioWaitForInterrupt (1, 1000);
-		LinuxcopeLogEvent (1, 0);
+		LinuxcopeLogEvent (INSTANCE_1, 0);
 		printf ("T1\n");
-		LinuxcopeLogEvent (0, 0);
+		LinuxcopeLogEvent (INSTANCE_1,1);
 	}
 }
 

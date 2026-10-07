@@ -10,6 +10,7 @@
 #include "../../common/LinuxcopeIoctl.h"
 
 static int sHandle[LINUXCOPE_MAX_INSTANCE];
+static uint32_t sEventId[LINUXCOPE_MAX_INSTANCE];
 
 /**********************************************************************************/
 int LinuxcopeOpen (int Instance, char *ThreadName)
@@ -31,6 +32,8 @@ int LinuxcopeOpen (int Instance, char *ThreadName)
 		return LINUXCOPE_IOCTL_FAILED;
 
 	printf ("Request.Id=%d\n",Request.Id);
+	sEventId[Instance] = Request.Id;
+
 	return LINUXCOPE_OK;
 }
 
@@ -45,6 +48,7 @@ int LinuxcopeLogEvent (int Instance,int Value)
 	clock_gettime(CLOCK_REALTIME, &ts);
 
 	Request.Timetag = ts.tv_sec * 1E9 + ts.tv_nsec;
+	Request.Id = sEventId[Instance];
 	rc = ioctl (sHandle[Instance], LOG_EVENT_REQUEST_CODE, &Request);
 	if (rc != 0)
 		return LINUXCOPE_IOCTL_FAILED;
