@@ -4,6 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import {HttpClient} from '@angular/common/http';
 import {RecordControlRequest} from '../../icd/RecordControl'
+import { TGT_IP } from '../../icd/Header';
 
 @Component({
   imports: [MatToolbarModule, MatButtonModule, MatIconModule],
@@ -24,6 +25,19 @@ export class Toolbar {
     console.log('Record button clicked');
     this.isRecording = !this.isRecording;
     this.recordControlRequest.Control = this.isRecording==true ? 1:0;
+
+    var body = this.recordControlRequest.Serialize();
+    console.log (body);
+    this.http.post (TGT_IP,body,{responseType: 'arraybuffer'}).subscribe(
+      (val) => {
+          console.log("POST call successful value returned in body",  val);
+      },
+      response => {
+          console.log("POST call in error", response);
+      },
+      () => {
+          //console.log("The POST observable is now completed.");
+      });
   }
 
   onOpen(): void {

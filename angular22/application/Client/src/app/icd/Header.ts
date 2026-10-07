@@ -3,7 +3,8 @@ export enum E_PC_TO_TGT_CODE {
 }
 
 export const PC_TO_TGT_MAGIC = 0xCAFE2DAD;
-//export const TGT_IP = 'http://'+window.location.hostname+':8000';
+const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+export const TGT_IP = `http://${host}:8000`;
 
 export const SIZEOF_INT32 = 4;
 
