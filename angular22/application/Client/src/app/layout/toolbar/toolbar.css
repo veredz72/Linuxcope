@@ -8,14 +8,6 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
-.custom-toolbar button,
-.custom-toolbar mat-icon {
-  color: #ffffff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .toolbar-icon {
   width: 34px;
   height: 34px;
@@ -24,4 +16,21 @@
   object-fit: contain;
   display: block;
   margin: auto;
+}
+
+.icon-line-wrapper {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;              /* Sits right beneath the 34px image */
+    width: 30px;               /* Matches the 34px icon width */
+    height: 3px;               /* Thickness of the line */
+    background-color: #35cbe5; /* Change to your preferred line color */
+    border-radius: 2px;
+  }
 }

@@ -2,6 +2,8 @@ import { Component } from '@angular/core';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import {HttpClient} from '@angular/common/http';
+import {RecordControlRequest} from '../../icd/RecordControl'
 
 @Component({
   imports: [MatToolbarModule, MatButtonModule, MatIconModule],
@@ -10,13 +12,18 @@ import { MatIconModule } from '@angular/material/icon';
   templateUrl: './toolbar.html',
 })
 export class Toolbar {
+  isRecording : boolean = false;
+  recordControlRequest : RecordControlRequest;
 
-  onPlay(): void {
-    console.log('Play button clicked');
+  constructor (private http: HttpClient)
+  {
+    this.recordControlRequest = new RecordControlRequest;
   }
 
-  onStop(): void {
-    console.log('Stop button clicked');
+  onRecord(): void {
+    console.log('Record button clicked');
+    this.isRecording = !this.isRecording;
+    this.recordControlRequest.Control = this.isRecording==true ? 1:0;
   }
 
   onOpen(): void {
