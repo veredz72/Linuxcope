@@ -13,18 +13,36 @@ CRecordControlRequest::CRecordControlRequest()
 
 }
 
-
+/*****************************************************************************************************/
 CRecordControlRequest::~CRecordControlRequest()
 {
 }
 
+/*****************************************************************************************************/
+int CRecordControlRequest::ReadEvents (TGT_TO_PC_RECORD_CONTROL_REPLY *pReplyMsg)
+{
+	
+
+
+}
+
+/*****************************************************************************************************/
 int CRecordControlRequest::Execute(void *pRequest, void *pReply)
 {
 	PC_TO_TGT_RECORD_CONTROL_REQUEST *pRequestMsg = (PC_TO_TGT_RECORD_CONTROL_REQUEST *)pRequest;
 	TGT_TO_PC_RECORD_CONTROL_REPLY *pReplyMsg = (TGT_TO_PC_RECORD_CONTROL_REPLY *)pReply;
+	
+	//Start record
+	if (pRequestMsg->Control==1)
+	{
+		pReplyMsg->Header.Length = sizeof(TGT_TO_PC_RECORD_CONTROL_REPLY);
+	}
+	else //Stop record: read all events 
+	{
+		ReadEvents (pReplyMsg);
+	}
 
 	pReplyMsg->Header.Code = RECORD_CONTROL_REPLY_CODE;
-	pReplyMsg->Header.Length = sizeof(TGT_TO_PC_RECORD_CONTROL_REPLY);
 	pReplyMsg->Header.Magic = TGT_TO_PC_MAGIC;
 
 	return 0;

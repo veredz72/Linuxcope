@@ -4,9 +4,12 @@
 
 #include "PcRequest.h"
 
+struct TGT_TO_PC_RECORD_CONTROL_REPLY;
+
 class CRecordControlRequest : public CPcRequest
 {
 	private:
+		int ReadEvents (TGT_TO_PC_RECORD_CONTROL_REPLY *pReplyMsg);
 
 	public:
 		CRecordControlRequest();

@@ -6,7 +6,7 @@ OBJS 		=	$(TARGET)/Main.o\
 				$(TARGET)/BaseProtocol.o\
 				$(TARGET)/TcpProtocol.o\
 				$(TARGET)/RecordControlRequest.o\
-				$(TARGET)/ReadEventsRequest.o
+				#$(TARGET)/ReadEventsRequest.o
 
 AR = ar
 
@@ -59,5 +59,8 @@ $(TARGET)/ReadEventsRequest.o: ReadEventsRequest.cpp
 
 clean: 
 	make -C ../../library/TcpServer clean 
-	make -C ../../library/LinuxcopeAdmin clean 
+	make -C ../../library/LinuxcopeAdmin clean
+	make -C ../../library/Linuxcope clean 
+	make -C ../../driver/Linuxcope clean 
+	make -C ../../driver/Tio clean 
 	rm -Rf $(TARGET)
