@@ -1,6 +1,7 @@
 #include "stdio.h"
 #include "string.h"
 
+#include "LinuxcopeAdmin.h"
 #include "RecordControlRequest.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -35,10 +36,12 @@ int CRecordControlRequest::Execute(void *pRequest, void *pReply)
 	//Start record
 	if (pRequestMsg->Control==1)
 	{
+		LinuxcopeAdminRecordControl (true);
 		pReplyMsg->Header.Length = sizeof(TGT_TO_PC_RECORD_CONTROL_REPLY);
 	}
 	else //Stop record: read all events 
 	{
+		LinuxcopeAdminRecordControl (false);
 		ReadEvents (pReplyMsg);
 	}
 

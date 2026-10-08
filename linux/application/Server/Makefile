@@ -10,7 +10,8 @@ OBJS 		=	$(TARGET)/Main.o\
 
 AR = ar
 
-INCLUDES 	= -I../../library/TcpServer
+INCLUDES 	= -I../../library/TcpServer\
+			 	-I../../library/LinuxcopeAdmin
 			  
 CCFLAGS		= -g $(INCLUDES)
 

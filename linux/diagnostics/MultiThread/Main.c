@@ -23,7 +23,7 @@ void* Timer0(void* arg)
 	{
 		TioWaitForInterrupt (0, 1000);
 		LinuxcopeLogEvent (INSTANCE_0,0);
-		printf ("To\n");
+		//printf ("To\n");
 		LinuxcopeLogEvent (INSTANCE_0,1);
 	}
 }
@@ -44,7 +44,7 @@ void* Timer1(void* arg)
 	{
 		TioWaitForInterrupt (1, 1000);
 		LinuxcopeLogEvent (INSTANCE_1,0);
-		printf ("T1\n");
+		//printf ("T1\n");
 		LinuxcopeLogEvent (INSTANCE_1,1);
 	}
 }

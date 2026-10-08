@@ -111,6 +111,7 @@ static long LinuxcopeIoctl (struct file *file,unsigned int IoctlCode,unsigned lo
 		spin_lock(&sLogLock); //Enter critical section
 		if (RecordControlRequest.Value == 1)
 		{
+			printk ("Opening events file...\n");
 			sFilp=filp_open(FILE_PATH, O_CREAT | O_WRONLY | O_TRUNC, 0644);
 			if (IS_ERR(sFilp)) 
 			{
