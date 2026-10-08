@@ -99,14 +99,16 @@ static long LinuxcopeIoctl (struct file *file,unsigned int IoctlCode,unsigned lo
 		rc = copy_from_user(&LogEventRequest, (void*)IoctlParam, sizeof(LOG_EVENT_REQUEST));
 		spin_lock(&sLogLock); //Enter critical section
 		
-		bytes=kernel_write(sFilp, &OpenEventRequest, sizeof(OpenEventRequest), &sPos);
-		printk ("bytes=%ld\n",bytes);
-
+		if (sRecordControl==1)
+		{
+			bytes=kernel_write(sFilp, &OpenEventRequest, sizeof(OpenEventRequest), &sPos);
+		}
 		spin_unlock(&sLogLock); //Exit critical section
 		break;
 
 	case RECORD_CONTROL_REQUEST_CODE:
 		rc = copy_from_user(&RecordControlRequest, (void*)IoctlParam, sizeof(RECORD_CONTROL_REQUEST));
+		spin_lock(&sLogLock); //Enter critical section
 		if (RecordControlRequest.Value == 1)
 		{
 			sFilp=filp_open(FILE_PATH, O_CREAT | O_WRONLY | O_TRUNC, 0644);
@@ -125,6 +127,7 @@ static long LinuxcopeIoctl (struct file *file,unsigned int IoctlCode,unsigned lo
 			sRecordControl = 0;
 			filp_close (sFilp,NULL);
 		}
+		spin_unlock(&sLogLock); //Exit critical section
 		break;
 	}
 	

@@ -41,12 +41,12 @@ int LinuxcopeOpen (int Instance, char *ThreadName)
 int LinuxcopeLogEvent (int Instance,int Value)
 {
 	LOG_EVENT_REQUEST Request;
-	Request.Value = Value;
 	struct timespec ts;
 	int rc;
 	
 	clock_gettime(CLOCK_REALTIME, &ts);
 
+	Request.Value = Value;
 	Request.Timetag = ts.tv_sec * 1E9 + ts.tv_nsec;
 	Request.Id = sEventId[Instance];
 	rc = ioctl (sHandle[Instance], LOG_EVENT_REQUEST_CODE, &Request);
