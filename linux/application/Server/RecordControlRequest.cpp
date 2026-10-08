@@ -36,13 +36,16 @@ int CRecordControlRequest::Execute(void *pRequest, void *pReply)
 	//Start record
 	if (pRequestMsg->Control==1)
 	{
+		printf ("Start record\n");
 		LinuxcopeAdminRecordControl (true);
-		pReplyMsg->Header.Length = sizeof(TGT_TO_PC_RECORD_CONTROL_REPLY);
+		pReplyMsg->Header.Length = sizeof(TGT_TO_PC_HEADER);
 	}
 	else //Stop record: read all events 
 	{
+		printf ("Stop record\n");
 		LinuxcopeAdminRecordControl (false);
 		ReadEvents (pReplyMsg);
+		pReplyMsg->Header.Length = sizeof(TGT_TO_PC_RECORD_CONTROL_REPLY);
 	}
 
 	pReplyMsg->Header.Code = RECORD_CONTROL_REPLY_CODE;

@@ -109,6 +109,7 @@ static long LinuxcopeIoctl (struct file *file,unsigned int IoctlCode,unsigned lo
 	case RECORD_CONTROL_REQUEST_CODE:
 		rc = copy_from_user(&RecordControlRequest, (void*)IoctlParam, sizeof(RECORD_CONTROL_REQUEST));
 		spin_lock(&sLogLock); //Enter critical section
+		printk ("RecordControlRequest.Value=%d\n",RecordControlRequest.Value);
 		if (RecordControlRequest.Value == 1)
 		{
 			printk ("Opening events file...\n");

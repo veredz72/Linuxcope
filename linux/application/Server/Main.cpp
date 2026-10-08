@@ -4,10 +4,13 @@
 
 #include "Main.h"
 #include "TcpProtocol.h"
+#include "LinuxcopeAdmin.h"
 
 /**********************************************************************************/
 int main(void)
 {
+	LinuxcopeAdminOpen ();
+
 	CBaseProtocol *pTcpProtocol = new CTcpProtocol();
 
 	pTcpProtocol->Init();
