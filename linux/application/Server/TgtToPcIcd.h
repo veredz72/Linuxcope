@@ -2,7 +2,6 @@
 typedef enum E_TGT_TO_PC_CODE
 {
 	RECORD_CONTROL_REPLY_CODE = 1,
-	READ_EVENTS_REPLY_CODE = 2,
     LAST_REPLY_CODE				
 }E_TGT_TO_PC_CODE;
 
@@ -17,12 +16,6 @@ typedef struct TGT_TO_PC_HEADER
 }TGT_TO_PC_HEADER;
 
 /***************************************************/
-typedef struct TGT_TO_PC_RECORD_CONTROL_REPLY
-{
-	TGT_TO_PC_HEADER	Header;
-}TGT_TO_PC_RECORD_CONTROL_REPLY;
-
-/***************************************************/
 typedef struct EVENT_DESC
 {
 	uint32_t Id;
@@ -30,16 +23,16 @@ typedef struct EVENT_DESC
 	uint64_t Timetag;
 }EVENT_DESC;
 
-typedef struct TGT_TO_PC_READ_EVENTS_REPLY
+/***************************************************/
+typedef struct TGT_TO_PC_RECORD_CONTROL_REPLY
 {
 	TGT_TO_PC_HEADER	Header;
 	EVENT_DESC			Event[N_MAX_EVENTS];
-}TGT_TO_PC_READ_EVENTS_REPLY;
+}TGT_TO_PC_RECORD_CONTROL_REPLY;
 
 /***************************************************/
 typedef union TGT_TO_PC_REPLY_U
 {
 	TGT_TO_PC_RECORD_CONTROL_REPLY			RecordControlReply;
-	TGT_TO_PC_READ_EVENTS_REPLY				ReadEventsReply;
 }TGT_TO_PC_REPLY_U;
 

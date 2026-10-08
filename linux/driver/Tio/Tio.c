@@ -92,7 +92,7 @@ static void TioTimerCallback (struct timer_list *t)
 	sInterruptFlag[TmrId] = 1;
 	
     chan->tick_count++;
-    //pr_info("Channel %d expired! Tick count: %lu\n",TmrId, chan->tick_count);
+    //printk("Channel %d expired! Tick count: %lu\n",TmrId, chan->tick_count);
 
     // Re-arm using each channel's independent period */
     mod_timer(&chan->timer, jiffies + msecs_to_jiffies(chan->interval_ms));
