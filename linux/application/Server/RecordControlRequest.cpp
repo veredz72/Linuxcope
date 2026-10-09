@@ -11,7 +11,6 @@
 CRecordControlRequest::CRecordControlRequest()
 {
 	m_RequestId = RECORD_CONTROL_REQUEST_CODE;
-	m_pEventsTable = new LINUXCOPE_ADMIN_EVENT_DESC[16];
 }
 
 /*****************************************************************************************************/
@@ -24,10 +23,11 @@ int CRecordControlRequest::ReadEvents (TGT_TO_PC_RECORD_CONTROL_REPLY *pReplyMsg
 {
 	int NofEvents;
 
-	LinuxcopeAdminReadEvents (&NofEvents, m_pEventsTable);
+	LinuxcopeAdminReadEvents ((int *)&pReplyMsg-> NofEvents, 
+								(LINUXCOPE_ADMIN_EVENT_DESC *)&pReplyMsg->Event);
 	for (int i=0;i<NofEvents;i++)
 	{
-		printf ("%d. %s %d\n",i, m_pEventsTable[i].Name, m_pEventsTable[i].Id);
+		printf ("%d. %s %d\n",i, pReplyMsg->Event[i].Name, pReplyMsg->Event[i].Id);
 	}
 
 }

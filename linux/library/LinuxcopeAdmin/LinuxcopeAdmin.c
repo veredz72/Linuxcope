@@ -54,9 +54,9 @@ int LinuxcopeAdminReadEvents (int *NofEvents, LINUXCOPE_ADMIN_EVENT_DESC *pDesc)
 	*NofEvents = Request.NofEvents;
 	for (int i=0;i<Request.NofEvents; i++)
 	{
-		printf ("%d %s\n",Request.Event[i].Id, Request.Event[i].Name);
-		//strcpy (pDst->Name, Request.Event[i].Name);
-		//pDst->Id =  Request.Event[i].Id;
+		strcpy (pDst->Name, Request.Event[i].Name);
+		pDst->Id =  Request.Event[i].Id;
+		pDst++;
 	}
 	return LINUXCOPE_ADMIN_OK;
 }
