@@ -11,7 +11,6 @@
 CRecordControlRequest::CRecordControlRequest()
 {
 	m_RequestId = RECORD_CONTROL_REQUEST_CODE;
-
 }
 
 /*****************************************************************************************************/
@@ -22,8 +21,14 @@ CRecordControlRequest::~CRecordControlRequest()
 /*****************************************************************************************************/
 int CRecordControlRequest::ReadEvents (TGT_TO_PC_RECORD_CONTROL_REPLY *pReplyMsg)
 {
-	
+	int NofEvents;
 
+	LinuxcopeAdminReadEvents ((int *)&pReplyMsg-> NofEvents, 
+								(LINUXCOPE_ADMIN_EVENT_DESC *)&pReplyMsg->Event);
+	for (int i=0;i<NofEvents;i++)
+	{
+		printf ("%d. %s %d\n",i, pReplyMsg->Event[i].Name, pReplyMsg->Event[i].Id);
+	}
 
 }
 
@@ -36,13 +41,16 @@ int CRecordControlRequest::Execute(void *pRequest, void *pReply)
 	//Start record
 	if (pRequestMsg->Control==1)
 	{
+		printf ("Start record\n");
 		LinuxcopeAdminRecordControl (true);
-		pReplyMsg->Header.Length = sizeof(TGT_TO_PC_RECORD_CONTROL_REPLY);
+		pReplyMsg->Header.Length = sizeof(TGT_TO_PC_HEADER);
 	}
 	else //Stop record: read all events 
 	{
+		printf ("Stop record\n");
 		LinuxcopeAdminRecordControl (false);
 		ReadEvents (pReplyMsg);
+		pReplyMsg->Header.Length = sizeof(TGT_TO_PC_RECORD_CONTROL_REPLY);
 	}
 
 	pReplyMsg->Header.Code = RECORD_CONTROL_REPLY_CODE;

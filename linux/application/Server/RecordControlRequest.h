@@ -5,6 +5,7 @@
 #include "PcRequest.h"
 
 struct TGT_TO_PC_RECORD_CONTROL_REPLY;
+struct LINUXCOPE_ADMIN_EVENT_DESC;
 
 class CRecordControlRequest : public CPcRequest
 {

@@ -38,3 +38,25 @@ int LinuxcopeAdminRecordControl (bool Enable)
 
 	return LINUXCOPE_ADMIN_OK;
 }
+
+/**********************************************************************************/
+int LinuxcopeAdminReadEvents (int *NofEvents, LINUXCOPE_ADMIN_EVENT_DESC *pDesc)
+{
+	READ_EVENTS_REQUEST Request;
+	LINUXCOPE_ADMIN_EVENT_DESC *pDst = pDesc;
+	int rc;
+
+	//Send request to read events list 
+	rc = ioctl (sHandle, READ_EVENTS_REQUEST_CODE, &Request);
+	if (rc != 0)
+		return LINUXCOPE_ADMIN_IOCTL_FAILED;
+
+	*NofEvents = Request.NofEvents;
+	for (int i=0;i<Request.NofEvents; i++)
+	{
+		strcpy (pDst->Name, Request.Event[i].Name);
+		pDst->Id =  Request.Event[i].Id;
+		pDst++;
+	}
+	return LINUXCOPE_ADMIN_OK;
+}

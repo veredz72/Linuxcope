@@ -5,7 +5,8 @@ typedef enum E_TGT_TO_PC_CODE
     LAST_REPLY_CODE				
 }E_TGT_TO_PC_CODE;
 
-#define N_MAX_EVENTS    1024
+#define N_MAX_RECORDS    1024
+#define N_MAX_EVENTS	 16
 
 /***************************************************/
 typedef struct TGT_TO_PC_HEADER
@@ -16,18 +17,28 @@ typedef struct TGT_TO_PC_HEADER
 }TGT_TO_PC_HEADER;
 
 /***************************************************/
-typedef struct EVENT_DESC
+typedef struct EVENT_RECORD
 {
 	uint32_t Id;
 	uint32_t Value;
 	uint64_t Timetag;
+}EVENT_RECORD;
+
+/***************************************************/
+typedef struct EVENT_DESC
+{
+	uint32_t Name[2];
+	uint32_t Id;
 }EVENT_DESC;
 
 /***************************************************/
 typedef struct TGT_TO_PC_RECORD_CONTROL_REPLY
 {
 	TGT_TO_PC_HEADER	Header;
+	uint32_t 			NofEvents;				//N Events in table 
+	uint32_t 			NofRecords;				//N Events in log file 
 	EVENT_DESC			Event[N_MAX_EVENTS];
+	EVENT_RECORD		Record[N_MAX_RECORDS];
 }TGT_TO_PC_RECORD_CONTROL_REPLY;
 
 /***************************************************/
