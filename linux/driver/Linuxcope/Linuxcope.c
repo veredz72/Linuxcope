@@ -55,10 +55,12 @@ static long LinuxcopeIoctl (struct file *file,unsigned int IoctlCode,unsigned lo
 	OPEN_EVENT_REQUEST OpenEventRequest;
 	LOG_EVENT_REQUEST LogEventRequest;
 	RECORD_CONTROL_REQUEST RecordControlRequest;
+	READ_EVENTS_REQUEST ReadEventsRequest;
+
 	struct EVENT_DESC *pEvent;
 	ssize_t bytes;
 
-	int rc;
+	int rc,EventId=0;
 	bool Found = false;
 
 	switch (IoctlCode)
@@ -86,6 +88,8 @@ static long LinuxcopeIoctl (struct file *file,unsigned int IoctlCode,unsigned lo
 			//Copy name from request to descriptor
 			memcpy (pEvent->Name, OpenEventRequest.Name, EVENT_NAME_LENGTH);
 			pEvent->Id = list_count_nodes(&sEventList);
+			printk ("L91 %d %s\n",pEvent->Id, pEvent->Name);
+
 			//Add to the end of the list
 			list_add_tail(&pEvent->node, &sEventList);
 		}
@@ -109,7 +113,6 @@ static long LinuxcopeIoctl (struct file *file,unsigned int IoctlCode,unsigned lo
 	case RECORD_CONTROL_REQUEST_CODE:
 		rc = copy_from_user(&RecordControlRequest, (void*)IoctlParam, sizeof(RECORD_CONTROL_REQUEST));
 		spin_lock(&sLogLock); //Enter critical section
-		printk ("RecordControlRequest.Value=%d\n",RecordControlRequest.Value);
 		if (RecordControlRequest.Value == 1)
 		{
 			printk ("Opening events file...\n");
@@ -131,7 +134,19 @@ static long LinuxcopeIoctl (struct file *file,unsigned int IoctlCode,unsigned lo
 		}
 		spin_unlock(&sLogLock); //Exit critical section
 		break;
+
+	case READ_EVENTS_REQUEST_CODE:
+		//Loop on events list 
+		list_for_each_entry(pEvent, &sEventList, node) {
+			memcpy (ReadEventsRequest.Event[EventId].Name, pEvent->Name, EVENT_NAME_LENGTH);
+			ReadEventsRequest.Event[EventId].Id = pEvent->Id;
+			EventId++;
+		}
+		ReadEventsRequest.NofEvents = EventId;
+		rc=copy_to_user((void*)IoctlParam, &ReadEventsRequest, sizeof(READ_EVENTS_REQUEST));
+		break;
 	}
+	
 	
 
 	return 0;
