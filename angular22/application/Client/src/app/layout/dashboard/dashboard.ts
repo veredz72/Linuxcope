@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartData, ChartType, Plugin } from 'chart.js';
+import {Icd} from '../../icd/Icd'
 
 enum MarkerState {
   Undefined,  // 0
@@ -17,6 +18,10 @@ enum MarkerState {
 export class Dashboard {
   public chartType: ChartType = 'line';
 
+  constructor ()
+  {
+    
+  }
   // Expose the plugin to the template
   
 
