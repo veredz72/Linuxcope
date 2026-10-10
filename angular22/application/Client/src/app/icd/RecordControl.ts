@@ -75,7 +75,7 @@ export class RecordControlReply {
 
         this.NofEvents = arr32[Offset++];
         this.NofRecords = arr32[Offset++];
-
+        let i=arr32[Offset++];
         for (let i=0;i<N_MAX_EVENTS;i++)
         {
             this.Event[i].Name[0] = arr32[Offset++];
@@ -90,5 +90,6 @@ export class RecordControlReply {
             this.Record[i].Timetag[0] = arr32[Offset++];
             this.Record[i].Timetag[1]=arr32[Offset++]
         }
+        console.log (Offset*4);
     }
  }

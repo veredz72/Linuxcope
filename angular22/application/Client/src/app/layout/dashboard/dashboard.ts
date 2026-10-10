@@ -238,7 +238,7 @@ public chartData: ChartData<'scatter'> = {
     for (let i=0;i<recordControlReply.NofRecords;i++)
     {
       let record = recordControlReply.Record[i];
-      console.log  (record.Id +':'+ record.Value + ':' + record.Timetag[0]*1E9 + record.Timetag[1]);
+      console.log  (record.Id +':'+ record.Value + ':' + (record.Timetag[1]*1E9 + record.Timetag[0]));
     } 
     this.chart.update()
   };
