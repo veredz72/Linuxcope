@@ -5,6 +5,7 @@
 #include <sys/ioctl.h>
 #include <errno.h>
 #include <stdbool.h>
+#include <time.h>
 
 #include "LinuxcopeAdmin.h"
 #include "../../common/LinuxcopeIoctl.h"
@@ -29,7 +30,13 @@ int LinuxcopeAdminRecordControl (bool Enable)
 {
 	int rc;
 	RECORD_CONTROL_REQUEST Request;
+	struct timespec ts;
 
+	if (Enable==true)
+	{
+		clock_gettime(CLOCK_REALTIME, &ts);
+		Request.Timetag = ts.tv_sec * 1E9 + ts.tv_nsec;
+	}
 	Request.Value = Enable;
 	
 	rc = ioctl (sHandle, RECORD_CONTROL_REQUEST_CODE, &Request);

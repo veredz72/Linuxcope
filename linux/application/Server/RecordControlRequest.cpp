@@ -11,6 +11,7 @@
 CRecordControlRequest::CRecordControlRequest()
 {
 	m_RequestId = RECORD_CONTROL_REQUEST_CODE;
+	printf ("sizeof(TGT_TO_PC_RECORD_CONTROL_REPLY)=%d\n",sizeof(TGT_TO_PC_RECORD_CONTROL_REPLY));
 }
 
 /*****************************************************************************************************/
@@ -21,15 +22,39 @@ CRecordControlRequest::~CRecordControlRequest()
 /*****************************************************************************************************/
 int CRecordControlRequest::ReadEvents (TGT_TO_PC_RECORD_CONTROL_REPLY *pReplyMsg)
 {
-	int NofEvents;
+	int NofRecords=0;
+	FILE *Handle;
+	EVENT_RECORD Record,*pDst;
+	int rc;
 
 	LinuxcopeAdminReadEvents ((int *)&pReplyMsg-> NofEvents, 
 								(LINUXCOPE_ADMIN_EVENT_DESC *)&pReplyMsg->Event);
-	for (int i=0;i<NofEvents;i++)
+	
+	Handle = fopen (FILE_PATH,"rb");
+	if (Handle==NULL)
 	{
-		printf ("%d. %s %d\n",i, pReplyMsg->Event[i].Name, pReplyMsg->Event[i].Id);
+		printf ("Failed to open %s\n",FILE_PATH);
+		return -1;
 	}
 
+	printf ("sizeof(EVENT_RECORD)=%d\n",sizeof(EVENT_RECORD));
+	while (1)
+	{
+		rc=fread (&Record,1,sizeof(EVENT_RECORD),Handle);
+		if (rc!=sizeof(EVENT_RECORD))
+			break;
+
+		pDst = &pReplyMsg->Record[NofRecords];
+		memcpy (pDst, &Record, sizeof(EVENT_RECORD));
+		NofRecords++;
+	}
+	fclose (Handle);
+
+	pReplyMsg->NofRecords = NofRecords;
+	for (int i=0;i<NofRecords;i++)
+	{
+		printf ("Id=%d Value=%d %lld\n",pReplyMsg->Record[i].Id, pReplyMsg->Record[i].Value, pReplyMsg->Record[i].Timetag);
+	}
 }
 
 /*****************************************************************************************************/

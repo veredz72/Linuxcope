@@ -34,6 +34,7 @@ static struct device *sCharDevice;
 static struct file *sFilp;
 static loff_t sPos;
 static int sRecordControl = 0;
+static u64 sRecordStartTimetag;
 
 static LIST_HEAD(sEventList);
 
@@ -88,7 +89,6 @@ static long LinuxcopeIoctl (struct file *file,unsigned int IoctlCode,unsigned lo
 			//Copy name from request to descriptor
 			memcpy (pEvent->Name, OpenEventRequest.Name, EVENT_NAME_LENGTH);
 			pEvent->Id = list_count_nodes(&sEventList);
-			printk ("L91 %d %s\n",pEvent->Id, pEvent->Name);
 
 			//Add to the end of the list
 			list_add_tail(&pEvent->node, &sEventList);
@@ -105,7 +105,9 @@ static long LinuxcopeIoctl (struct file *file,unsigned int IoctlCode,unsigned lo
 		
 		if (sRecordControl==1)
 		{
-			bytes=kernel_write(sFilp, &OpenEventRequest, sizeof(OpenEventRequest), &sPos);
+			LogEventRequest.Timetag -= sRecordStartTimetag;
+			bytes=kernel_write(sFilp, &LogEventRequest, sizeof(LOG_EVENT_REQUEST), &sPos);
+			printk ("%d : %lld\n",LogEventRequest.Id, LogEventRequest.Timetag);
 		}
 		spin_unlock(&sLogLock); //Exit critical section
 		break;
@@ -126,6 +128,7 @@ static long LinuxcopeIoctl (struct file *file,unsigned int IoctlCode,unsigned lo
 				sPos = 0;
 				sRecordControl = 1;
 			}
+			sRecordStartTimetag = RecordControlRequest.Timetag;
 		}
 		else
 		{
