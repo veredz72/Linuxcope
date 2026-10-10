@@ -4,6 +4,8 @@
 
 #include "PcRequest.h"
 
+#define FILE_PATH			"/mnt/ramdisk/linuxcope.bin"
+
 struct TGT_TO_PC_RECORD_CONTROL_REPLY;
 struct LINUXCOPE_ADMIN_EVENT_DESC;
 

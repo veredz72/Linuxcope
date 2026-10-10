@@ -23,6 +23,7 @@ typedef struct LOG_EVENT_REQUEST
 typedef struct RECORD_CONTROL_REQUEST
 {
 	uint32_t Value;
+	uint64_t Timetag;
 }RECORD_CONTROL_REQUEST;
 
 typedef struct READ_EVENTS_REQUEST
