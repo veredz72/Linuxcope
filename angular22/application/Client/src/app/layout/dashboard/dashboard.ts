@@ -1,7 +1,10 @@
-import { Component } from '@angular/core';
+import { Component,ViewChild } from '@angular/core';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartData, ChartType, Plugin } from 'chart.js';
-import {Icd} from '../../icd/Icd'
+import { Sharedobject } from '../../../services/sharedobject';
+import { RecordControlReply } from '../../icd/RecordControl';
+import { Icd } from '../../icd/Icd';
+import { Chart} from 'chart.js/auto';
 
 enum MarkerState {
   Undefined,  // 0
@@ -17,25 +20,28 @@ enum MarkerState {
 })
 export class Dashboard {
   public chartType: ChartType = 'line';
+  //@ViewChild('chart', { static: false }) chart: UIChart;
+  @ViewChild(BaseChartDirective) chart!: BaseChartDirective;
 
-  constructor ()
-  {
-    
+  constructor (private sharedObject: Sharedobject) {
+    sharedObject.DashboardObject=this;
+
   }
   // Expose the plugin to the template
   
 
   // 2. Add data and point configurations
   // Don't forget to register LineElement if importing tree-shakable elements:
-// import { Chart, ScatterController, PointElement, LineElement, LinearScale, Tooltip, Legend } from 'chart.js';
-// Chart.register(ScatterController, PointElement, LineElement, LinearScale, Tooltip, Legend);
+  // import { Chart, ScatterController, PointElement, LineElement, LinearScale, Tooltip, Legend } from 'chart.js';
+  // Chart.register(ScatterController, PointElement, LineElement, LinearScale, Tooltip, Legend);
 
-public readonly yCategories: string[] = ['','TMR1', 'TMR2', 'T1Isr', 'T2Isr',''];
+public yCategories: string[]= ['','?', '?', '?', '?',''];
 public chartData: ChartData<'scatter'> = {
   datasets: [
     {
       label: '',
-      data: [
+      data: [],
+      /*data: [
         { x: 50, y: 1 },
         { x: 550, y: 1 },
          { x: null, y: null },
@@ -55,7 +61,7 @@ public chartData: ChartData<'scatter'> = {
         { x: 945, y: 3},
         { x: null, y: null },
         { x: 395, y: 4},
-      ],
+      ],*/
       // 1. Enable the line
       showLine: true,
 
@@ -195,4 +201,43 @@ public chartData: ChartData<'scatter'> = {
     ctx.restore();
   }
 
+  /***********************************************************************************/
+  public UpdateView (recordControlReply : RecordControlReply)
+  {
+    //Reset the yCategories array and add an empty string at the beginning and end
+    this.yCategories = []
+    this.yCategories.push('');
+    for (let i=0;i<recordControlReply.NofEvents;i++)
+    {
+      this.yCategories.push(Icd.GetString(recordControlReply.Event[i].Name));
+    }
+    this.yCategories.push('');
+
+    if (!this.chartOptions) {
+      this.chartOptions = {};
+    }
+
+    if (!this.chartOptions.scales) {
+      this.chartOptions.scales = {};
+    }
+
+    if (!this.chartOptions.scales['y']) {
+      this.chartOptions.scales['y'] = {};
+    }
+
+    this.chartOptions.scales['y'].max = this.yCategories.length - 1;
+
+    this.chartData.datasets[0].data = [];
+    this.chartData.datasets[0].data.push({x: 50, y: 1});
+    this.chartData.datasets[0].data.push({x: 550, y: 1});
+    this.chartData.datasets[0].data.push({x: null, y: null});
+    this.chartData.datasets[0].data.push({x: 950, y: 1});
+    this.chartData.datasets[0].data.push({x: 1450, y: 1});
+    for (let i=0;i<recordControlReply.NofRecords;i++)
+    {
+      let record = recordControlReply.Record[i];
+      //this.chartData.datasets[0].data.push({x:record.Timetag[1], y:record.Id+1});
+    } 
+    this.chart.update()
+  };
 }
