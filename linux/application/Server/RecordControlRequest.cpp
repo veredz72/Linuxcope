@@ -53,7 +53,7 @@ int CRecordControlRequest::ReadEvents (TGT_TO_PC_RECORD_CONTROL_REPLY *pReplyMsg
 	pReplyMsg->NofRecords = NofRecords;
 	for (int i=0;i<NofRecords;i++)
 	{
-		printf ("Id=%d Value=%d %lld\n",pReplyMsg->Record[i].Id, pReplyMsg->Record[i].Value, pReplyMsg->Record[i].Timetag);
+		printf ("Id=%d Value=%d\n",pReplyMsg->Record[i].Id, pReplyMsg->Record[i].Value);
 	}
 }
 

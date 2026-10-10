@@ -21,7 +21,8 @@ typedef struct EVENT_RECORD
 {
 	uint32_t Id;
 	uint32_t Value;
-	uint64_t Timetag;
+	uint32_t TimetagLsw;
+	uint32_t TimetagMsw;
 }EVENT_RECORD;
 
 /***************************************************/
