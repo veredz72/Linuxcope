@@ -68,28 +68,27 @@ export class RecordControlReply {
     public DeSerialize (val : ArrayBuffer)
     {
         let Offset=0;
-        var arr32 = new Int32Array (val);
+        var arr32 = new Uint32Array (val);
         this.Header.Magic = arr32[Offset++];
         this.Header.Code = arr32[Offset++];
         this.Header.Length = arr32[Offset++];
 
         this.NofEvents = arr32[Offset++];
         this.NofRecords = arr32[Offset++];
-        let i=arr32[Offset++];
+  
         for (let i=0;i<N_MAX_EVENTS;i++)
         {
             this.Event[i].Name[0] = arr32[Offset++];
             this.Event[i].Name[1] = arr32[Offset++];
             this.Event[i].Id = arr32[Offset++];
         }
-
+        
         for (let i=0;i<N_MAX_RECORDS;i++)
         {
             this.Record[i].Id = arr32[Offset++];
             this.Record[i].Value = arr32[Offset++];
             this.Record[i].Timetag[0] = arr32[Offset++];
-            this.Record[i].Timetag[1]=arr32[Offset++]
+            this.Record[i].Timetag[1] = arr32[Offset++]
         }
-        console.log (Offset*4);
     }
  }

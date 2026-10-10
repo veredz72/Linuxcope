@@ -51,6 +51,9 @@ public chartData: ChartData<'scatter'> = {
         { x: 400, y: 2 },
         { x: 600, y: 2 },
         { x: null, y: null },
+         { x: 450, y: 1 },
+        { x: 500, y: 1 },
+        { x: null, y: null },
         { x: 800, y: 2 },
         { x: 1000, y: 2 },
         { x: null, y: null },
@@ -202,6 +205,14 @@ public chartData: ChartData<'scatter'> = {
   }
 
   /***********************************************************************************/
+  private GetTimeMsec (Msw : number, Lsw : number) : number
+  {
+    let Timetag:BigInt =BigInt(Msw<<32) + BigInt(Lsw);
+    //console.log (Timetag);
+    return Number(Timetag) / 1000000;
+  }
+
+  /***********************************************************************************/
   public UpdateView (recordControlReply : RecordControlReply)
   {
     //Reset the yCategories array and add an empty string at the beginning and end
@@ -209,6 +220,7 @@ public chartData: ChartData<'scatter'> = {
     this.yCategories.push('');
     for (let i=0;i<recordControlReply.NofEvents;i++)
     {
+      console.log (Icd.GetString(recordControlReply.Event[i].Name))
       this.yCategories.push(Icd.GetString(recordControlReply.Event[i].Name));
     }
     this.yCategories.push('');
@@ -228,18 +240,21 @@ public chartData: ChartData<'scatter'> = {
     this.chartOptions.scales['y'].max = this.yCategories.length - 1;
 
     this.chartData.datasets[0].data = [];
-    this.chartData.datasets[0].data.push({x: 50, y: 1});
-    this.chartData.datasets[0].data.push({x: 550, y: 1});
-    this.chartData.datasets[0].data.push({x: null, y: null});
-    this.chartData.datasets[0].data.push({x: 950, y: 1});
-    this.chartData.datasets[0].data.push({x: 1450, y: 1});
-    console.log (recordControlReply);
-    
+
+    //Scan all records from specific Event 
     for (let i=0;i<recordControlReply.NofRecords;i++)
     {
-      let record = recordControlReply.Record[i];
-      console.log  (record.Id +':'+ record.Value + ':' + (record.Timetag[1]*1E9 + record.Timetag[0]));
-    } 
+        let record = recordControlReply.Record[i];
+        
+        //Create 1 number from 
+        let TimetagMsec = this.GetTimeMsec (record.Timetag[1], record.Timetag[0]);
+        
+        this.chartData.datasets[0].data.push({x: TimetagMsec, y: Number(record.Id+1)});
+        //console.log  (record.Id +':'+ TimetagMsec);
+        if (i>0 && (i%2==1))
+          this.chartData.datasets[0].data.push({x: null, y: null});
+    }
+    
     this.chart.update()
   };
 }
