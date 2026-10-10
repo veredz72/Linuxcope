@@ -233,10 +233,12 @@ public chartData: ChartData<'scatter'> = {
     this.chartData.datasets[0].data.push({x: null, y: null});
     this.chartData.datasets[0].data.push({x: 950, y: 1});
     this.chartData.datasets[0].data.push({x: 1450, y: 1});
+    console.log (recordControlReply);
+    
     for (let i=0;i<recordControlReply.NofRecords;i++)
     {
       let record = recordControlReply.Record[i];
-      //this.chartData.datasets[0].data.push({x:record.Timetag[1], y:record.Id+1});
+      console.log  (record.Id +':'+ record.Value + ':' + record.Timetag[0]*1E9 + record.Timetag[1]);
     } 
     this.chart.update()
   };

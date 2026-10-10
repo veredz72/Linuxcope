@@ -39,6 +39,7 @@ export class EVENT_RECORD
     Id : number = 0;
     Value : number = 0;
     Timetag : number[];
+    
      constructor (){
         this.Timetag = new Array (2);
     }
