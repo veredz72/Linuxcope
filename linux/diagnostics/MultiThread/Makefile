@@ -20,9 +20,9 @@ pre-build: 	check_objectdir target
 
 target: $(OBJS)
 	make -C ../../library/Tio
-	make -C ../../library/Linuxcope
+	#make -C ../../library/Linuxcope
 	make -C ../../driver/Tio
-	make -C ../../driver/Linuxcope 
+	#make -C ../../driver/Linuxcope 
 	$(LD) $(LDFLAGS) $(CFLAGS) $(OBJS) $(LIBS) -o Main.out 
 		
 check_objectdir :

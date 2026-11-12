@@ -85,7 +85,7 @@ static struct file_operations sDrvOperations =
 static void TioTimerCallback (struct timer_list *t)
 {
     	// from_timer recovers the specific struct channel_dev that owns *t */
-	struct channel_dev *chan = from_timer(chan, t, timer);
+	struct channel_dev *chan = timer_container_of(chan, t, timer); //ubuntu20.04 : from_timer 
 	int TmrId = chan->channel_id;
 	
 	wake_up_interruptible(&sWaitQueue[TmrId]);
@@ -110,7 +110,7 @@ static int TioInit(void)
 		return -1;
 	}
 	
-	sCharClass = class_create(THIS_MODULE, CLASS_NAME);
+	sCharClass = class_create(CLASS_NAME); //U20.04: THIS_MODULE, CLASS_NAME
 	if (IS_ERR(sCharClass))
 	{
 		printk("TioInit: class_create failed rc=%ld\n",PTR_ERR(sCharClass));

@@ -39,7 +39,7 @@ static u64 sRecordStartTimetag;
 static LIST_HEAD(sEventList);
 
 /*********************************************************************************/
-static inline int list_count_nodes(const struct list_head *head)
+/*static inline int list_count_nodes(const struct list_head *head)
 {
     const struct list_head *pos;
     int count = 0;
@@ -48,7 +48,7 @@ static inline int list_count_nodes(const struct list_head *head)
         count++;
 
     return count;
-}
+}*/
 
 /*********************************************************************************/
 static long LinuxcopeIoctl (struct file *file,unsigned int IoctlCode,unsigned long IoctlParam)
@@ -190,7 +190,7 @@ static int LinuxcopeInit(void)
 		return -1;
 	}
 	
-	sCharClass = class_create(THIS_MODULE, CLASS_NAME);
+	sCharClass = class_create(CLASS_NAME); //U20.04: THIS_MODULE, CLASS_NAME
 	if (IS_ERR(sCharClass))
 	{
 		printk("TioInit: class_create failed rc=%ld\n",PTR_ERR(sCharClass));
