@@ -48,7 +48,7 @@ int LinuxcopeLogEvent (int Instance,int Value)
 
 	Request.Value = Value;
 	Request.Timetag = ts.tv_sec * 1E9 + ts.tv_nsec;
-	Request.Id = sEventId[Instance];
+	Request.Id = Instance; //sEventId[Instance];
 	rc = ioctl (sHandle[Instance], LOG_EVENT_REQUEST_CODE, &Request);
 	if (rc != 0)
 		return LINUXCOPE_IOCTL_FAILED;

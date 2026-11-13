@@ -18,7 +18,11 @@ static u32 sInterruptFlag[N_INTERRUPTS] = {0};
 int sMajorNumber;
 struct class *sCharClass;
 struct device *sCharDevice;
+static spinlock_t sLogLock;
+static struct file *sFilp;
+static loff_t sPos;
 
+#define FILE_PATH			"/mnt/ramdisk/tio.bin"
 
 #define NUM_CHANNELS 2
 #define DEVICE_NAME "tio"
@@ -31,9 +35,33 @@ struct channel_dev {
     struct timer_list timer;
 };
 
+typedef struct LOG_EVENT_REQUEST
+{
+	uint32_t Id;
+	uint32_t Value;
+	uint64_t Timetag;
+}LOG_EVENT_REQUEST;
+
 /* Two independent channel instances */
 static struct channel_dev channels[NUM_CHANNELS];
 
+/*********************************************************************************/
+static int LinuxcopeLogEvent (uint32_t Id, uint32_t Value, uint64_t Timetag)
+{
+	LOG_EVENT_REQUEST LogEventRequest;
+	ssize_t bytes;
+	
+	LogEventRequest.Id = Id;
+	LogEventRequest.Value = Value;
+	LogEventRequest.Timetag= Timetag;
+	
+	spin_lock(&sLogLock); //Enter critical section
+	bytes=kernel_write(sFilp, &LogEventRequest, sizeof(LOG_EVENT_REQUEST), &sPos);
+	//printk ("%d : %lld\n",LogEventRequest.Id, LogEventRequest.Timetag);
+	spin_unlock(&sLogLock); //Exit critical section
+	
+	return 0;
+}
 
 /**********************************************************************************/
 static long TioIoctl (struct file *file,unsigned int IoctlCode,unsigned long IoctlParam)
@@ -87,6 +115,7 @@ static void TioTimerCallback (struct timer_list *t)
     	// from_timer recovers the specific struct channel_dev that owns *t */
 	struct channel_dev *chan = timer_container_of(chan, t, timer); //ubuntu20.04 : from_timer 
 	int TmrId = chan->channel_id;
+	LinuxcopeLogEvent (TmrId*2, 0, ktime_get_real_ns());
 	
 	wake_up_interruptible(&sWaitQueue[TmrId]);
 	sInterruptFlag[TmrId] = 1;
@@ -126,14 +155,14 @@ static int TioInit(void)
 		return PTR_ERR(sCharClass);
 	}
 	
-	// Channel 0: 500 ms interval */
+	// Channel 0: 1 ms interval */
 	channels[0].channel_id = 0;
-	channels[0].interval_ms = 500;
+	channels[0].interval_ms = 1;
 	channels[0].tick_count = 0;
 
-	// Channel 1: 1500 ms interval */
+	// Channel 1: 3 ms interval */
 	channels[1].channel_id = 1;
-	channels[1].interval_ms = 1500;
+	channels[1].interval_ms = 3;
 	channels[1].tick_count = 0;
     	
 	for (i = 0; i < NUM_CHANNELS; i++) {
@@ -142,7 +171,11 @@ static int TioInit(void)
         	mod_timer(&channels[i].timer, jiffies + msecs_to_jiffies(channels[i].interval_ms));
     	}
 
-
+	spin_lock_init(&sLogLock);
+	
+	sFilp=filp_open(FILE_PATH, O_CREAT | O_WRONLY | O_TRUNC, 0644);
+	sPos = 0;
+	
  	return 0;
 }
 
@@ -150,6 +183,8 @@ static int TioInit(void)
 static void TioExit(void)
 {
 	int i;
+	
+	filp_close (sFilp,NULL);
 	
     	for (i = 0; i < NUM_CHANNELS; i++) {
         	timer_delete_sync(&channels[i].timer);

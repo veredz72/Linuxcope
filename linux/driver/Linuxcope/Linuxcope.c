@@ -105,9 +105,9 @@ static long LinuxcopeIoctl (struct file *file,unsigned int IoctlCode,unsigned lo
 		
 		if (sRecordControl==1)
 		{
-			LogEventRequest.Timetag -= sRecordStartTimetag;
+			//LogEventRequest.Timetag -= sRecordStartTimetag;
 			bytes=kernel_write(sFilp, &LogEventRequest, sizeof(LOG_EVENT_REQUEST), &sPos);
-			printk ("%d : %lld\n",LogEventRequest.Id, LogEventRequest.Timetag);
+			//printk ("%d : %lld\n",LogEventRequest.Id, LogEventRequest.Timetag);
 		}
 		spin_unlock(&sLogLock); //Exit critical section
 		break;
