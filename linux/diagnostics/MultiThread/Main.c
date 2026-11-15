@@ -54,6 +54,10 @@ int main(void)
 {
 	int rc;
 	pthread_t thread0,thread1;
+	pthread_attr_t attr;
+	struct sched_param param;
+	
+	pthread_attr_init(&attr);
 	
 	rc=TioOpen ();
 	if (rc!=TIO_OK)
@@ -62,23 +66,38 @@ int main(void)
 		return -1;
 	}
 	
-	rc = pthread_create(&thread0, NULL, Timer0, NULL);
+	rc = pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
     	if (rc != 0) {
-        	fprintf(stderr, "pthread_create failed\n");
+        	printf ("pthread_attr_setinheritsched failed");
         	return -1;
     	}
     	
-    	rc = pthread_create(&thread1, NULL, Timer1, NULL);
+	rc = pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
     	if (rc != 0) {
-        	fprintf(stderr, "pthread_create failed\n");
+        	printf("pthread_attr_setschedpolicy failed (Are you running with sudo?)");
+        	return -1;
+    	}
+    
+    	param.sched_priority = 99;
+    	rc = pthread_attr_setschedparam(&attr, &param);
+    	if (rc!= 0) {
+		printf("pthread_attr_setschedparam failed");
+		return -1;
+    	}
+    
+	rc = pthread_create(&thread0, &attr, Timer0, NULL);
+    	if (rc != 0) {
+        	printf("pthread_create failed\n");
         	return -1;
     	}
     	
-	while (1)
-	{
-		sleep (1);
-		
-	}
+    	rc = pthread_create(&thread1, &attr, Timer1, NULL);
+    	if (rc != 0) {
+        	printf("pthread_create failed\n");
+        	return -1;
+    	}
+    	
+	pthread_join(thread0, NULL);
 	return 0;
 }
 
