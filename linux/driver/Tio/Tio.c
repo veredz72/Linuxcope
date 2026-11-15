@@ -1,13 +1,11 @@
-#include <linux/init.h>
+
 #include <linux/module.h>
-#include "../../common/TioIoctl.h"
-#include <linux/io.h>
-#include <linux/fs.h>
-#include <linux/wait.h>
-#include <linux/sched.h>
-#include <linux/cdev.h>
+#include <linux/hrtimer.h>
+#include <linux/kernel.h>
 #include <linux/device.h>
-#include <linux/platform_device.h>
+#include <linux/ktime.h>
+
+#include "../../common/TioIoctl.h"
 
 MODULE_LICENSE("Dual BSD/GPL");
 
@@ -18,9 +16,6 @@ static u32 sInterruptFlag[N_INTERRUPTS] = {0};
 int sMajorNumber;
 struct class *sCharClass;
 struct device *sCharDevice;
-static spinlock_t sLogLock;
-static struct file *sFilp;
-static loff_t sPos;
 
 #define FILE_PATH			"/mnt/ramdisk/tio.bin"
 
@@ -28,37 +23,21 @@ static loff_t sPos;
 #define DEVICE_NAME "tio"
 #define CLASS_NAME "tio"
 
-struct channel_dev {
-    int channel_id;
-    int interval_ms;
-    unsigned long tick_count;
-    struct timer_list timer;
+static u32 PERIOD_NS [2] = { (1000LL * 1000LL), (2500LL * 1000LL)};/* 1 ms = 1,000,000 ns */
+
+struct rt_timer_ctx {
+    struct hrtimer timer;
+    int id;                 /* e.g., 0 for Timer0, 1 for Timer1 */
+    ktime_t period_kt;      /* Individual period for this timer */
+    /* Add wait_queue_head_t, atomic_t event_flag, etc. per instance here */
 };
 
-typedef struct LOG_EVENT_REQUEST
-{
-	uint32_t Id;
-	uint32_t Value;
-	uint64_t Timetag;
-}LOG_EVENT_REQUEST;
-
-/* Two independent channel instances */
-static struct channel_dev channels[NUM_CHANNELS];
+static struct rt_timer_ctx timers[2];
 
 /*********************************************************************************/
 static int LinuxcopeLogEvent (uint32_t Id, uint32_t Value, uint64_t Timetag)
-{
-	LOG_EVENT_REQUEST LogEventRequest;
-	ssize_t bytes;
-	
-	LogEventRequest.Id = Id;
-	LogEventRequest.Value = Value;
-	LogEventRequest.Timetag= Timetag;
-	
-	spin_lock(&sLogLock); //Enter critical section
-	bytes=kernel_write(sFilp, &LogEventRequest, sizeof(LOG_EVENT_REQUEST), &sPos);
-	//printk ("%d : %lld\n",LogEventRequest.Id, LogEventRequest.Timetag);
-	spin_unlock(&sLogLock); //Exit critical section
+{		
+	printk ("%d,%lld\n",Id*2, Timetag);
 	
 	return 0;
 }
@@ -110,21 +89,19 @@ static struct file_operations sDrvOperations =
 };
 
 /**********************************************************************************/
-static void TioTimerCallback (struct timer_list *t)
+static enum hrtimer_restart TioTimerCallback (struct hrtimer *t)
 {
-    	// from_timer recovers the specific struct channel_dev that owns *t */
-	struct channel_dev *chan = timer_container_of(chan, t, timer); //ubuntu20.04 : from_timer 
-	int TmrId = chan->channel_id;
-	LinuxcopeLogEvent (TmrId*2, 0, ktime_get_real_ns());
-	
-	wake_up_interruptible(&sWaitQueue[TmrId]);
-	sInterruptFlag[TmrId] = 1;
-	
-    chan->tick_count++;
-    //printk("Channel %d expired! Tick count: %lu\n",TmrId, chan->tick_count);
-
-    // Re-arm using each channel's independent period */
-    mod_timer(&chan->timer, jiffies + msecs_to_jiffies(chan->interval_ms));
+    struct rt_timer_ctx *ctx = container_of(t, struct rt_timer_ctx, timer);
+    u32 TmrId = ctx->id;
+    
+    LinuxcopeLogEvent (TmrId, 0, ktime_get_real_ns());
+    
+    wake_up_interruptible (&sWaitQueue[TmrId]);
+    sInterruptFlag[TmrId]=1;
+    
+    hrtimer_forward_now(t, ctx->period_kt);
+    
+    return HRTIMER_RESTART;
 }
 
 /**********************************************************************************/
@@ -155,27 +132,16 @@ static int TioInit(void)
 		return PTR_ERR(sCharClass);
 	}
 	
-	// Channel 0: 1 ms interval */
-	channels[0].channel_id = 0;
-	channels[0].interval_ms = 1;
-	channels[0].tick_count = 0;
-
-	// Channel 1: 3 ms interval */
-	channels[1].channel_id = 1;
-	channels[1].interval_ms = 3;
-	channels[1].tick_count = 0;
-    	
 	for (i = 0; i < NUM_CHANNELS; i++) {
 		init_waitqueue_head(&sWaitQueue[i]);
-        	timer_setup(&channels[i].timer, TioTimerCallback, 0);
-        	mod_timer(&channels[i].timer, jiffies + msecs_to_jiffies(channels[i].interval_ms));
+        	
+		/* Timer 0: 1 ms period */
+    		timers[i].id = i;
+    		timers[i].period_kt = ns_to_ktime(PERIOD_NS[i]);
+    		hrtimer_setup(&timers[i].timer, TioTimerCallback, CLOCK_MONOTONIC, HRTIMER_MODE_REL_HARD);
+		hrtimer_start(&timers[i].timer, timers[i].period_kt, HRTIMER_MODE_REL_HARD);
     	}
-
-	spin_lock_init(&sLogLock);
-	
-	sFilp=filp_open(FILE_PATH, O_CREAT | O_WRONLY | O_TRUNC, 0644);
-	sPos = 0;
-	
+		
  	return 0;
 }
 
@@ -183,11 +149,9 @@ static int TioInit(void)
 static void TioExit(void)
 {
 	int i;
-	
-	filp_close (sFilp,NULL);
-	
+		
     	for (i = 0; i < NUM_CHANNELS; i++) {
-        	timer_delete_sync(&channels[i].timer);
+        	hrtimer_cancel(&timers[i].timer);
     	}
  
 	device_destroy(sCharClass, MKDEV(sMajorNumber, 0));

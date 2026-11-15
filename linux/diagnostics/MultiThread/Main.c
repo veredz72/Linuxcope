@@ -13,7 +13,6 @@ void* Timer0(void* arg)
 {
 	int rc=0;
 	
-	rc=LinuxcopeOpen (INSTANCE_0, "Timer0");
 	if (rc!=LINUXCOPE_OK)
 	{
 		printf ("LinuxcopeOpen failed\n");
@@ -33,7 +32,6 @@ void* Timer1(void* arg)
 {
 	int rc=0;
 	
-	rc=LinuxcopeOpen (INSTANCE_1, "Timer1");
 	if (rc!=LINUXCOPE_OK)
 	{
 		printf ("LinuxcopeOpen failed\n");
@@ -66,6 +64,9 @@ int main(void)
 		return -1;
 	}
 	
+	rc=LinuxcopeOpen (INSTANCE_0, "Timer0");
+	rc=LinuxcopeOpen (INSTANCE_1, "Timer1");
+	
 	rc = pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
     	if (rc != 0) {
         	printf ("pthread_attr_setinheritsched failed");
@@ -78,7 +79,7 @@ int main(void)
         	return -1;
     	}
     
-    	param.sched_priority = 99;
+    	param.sched_priority = 80;
     	rc = pthread_attr_setschedparam(&attr, &param);
     	if (rc!= 0) {
 		printf("pthread_attr_setschedparam failed");

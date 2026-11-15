@@ -18,7 +18,6 @@ MODULE_LICENSE("Dual BSD/GPL");
 #define CLASS_NAME "linuxcope"
 
 #define EVENT_NAME_LENGTH     8
-#define FILE_PATH			"/mnt/ramdisk/linuxcope.bin"
 
 typedef struct EVENT_DESC {
     char Name[EVENT_NAME_LENGTH];
@@ -31,8 +30,6 @@ static spinlock_t sLogLock;
 static int sMajorNumber;
 static struct class *sCharClass;
 static struct device *sCharDevice;
-static struct file *sFilp;
-static loff_t sPos;
 static int sRecordControl = 0;
 static u64 sRecordStartTimetag;
 
@@ -101,41 +98,19 @@ static long LinuxcopeIoctl (struct file *file,unsigned int IoctlCode,unsigned lo
 	
 	case LOG_EVENT_REQUEST_CODE:
 		rc = copy_from_user(&LogEventRequest, (void*)IoctlParam, sizeof(LOG_EVENT_REQUEST));
-		spin_lock(&sLogLock); //Enter critical section
-		
-		if (sRecordControl==1)
-		{
-			//LogEventRequest.Timetag -= sRecordStartTimetag;
-			bytes=kernel_write(sFilp, &LogEventRequest, sizeof(LOG_EVENT_REQUEST), &sPos);
-			//printk ("%d : %lld\n",LogEventRequest.Id, LogEventRequest.Timetag);
-		}
-		spin_unlock(&sLogLock); //Exit critical section
+		printk ("%d,%lld\n",LogEventRequest.Id, LogEventRequest.Timetag);
 		break;
 
 	case RECORD_CONTROL_REQUEST_CODE:
 		rc = copy_from_user(&RecordControlRequest, (void*)IoctlParam, sizeof(RECORD_CONTROL_REQUEST));
-		spin_lock(&sLogLock); //Enter critical section
 		if (RecordControlRequest.Value == 1)
 		{
-			printk ("Opening events file...\n");
-			sFilp=filp_open(FILE_PATH, O_CREAT | O_WRONLY | O_TRUNC, 0644);
-			if (IS_ERR(sFilp)) 
-			{
-				printk ("Failed to open %s\n",FILE_PATH);
-			}
-			else
-			{
-				sPos = 0;
-				sRecordControl = 1;
-			}
 			sRecordStartTimetag = RecordControlRequest.Timetag;
 		}
 		else
 		{
 			sRecordControl = 0;
-			filp_close (sFilp,NULL);
 		}
-		spin_unlock(&sLogLock); //Exit critical section
 		break;
 
 	case READ_EVENTS_REQUEST_CODE:
