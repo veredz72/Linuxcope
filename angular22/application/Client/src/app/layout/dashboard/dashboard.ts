@@ -1,10 +1,11 @@
-import { Component,ViewChild } from '@angular/core';
+import { Component,ViewChild, afterNextRender } from '@angular/core';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartData, ChartType, Plugin } from 'chart.js';
 import { Sharedobject } from '../../../services/sharedobject';
 import { RecordControlReply } from '../../icd/RecordControl';
 import { Icd } from '../../icd/Icd';
 import { Chart} from 'chart.js/auto';
+import zoomPlugin from 'chartjs-plugin-zoom';
 
 enum MarkerState {
   Undefined,  // 0
@@ -20,12 +21,16 @@ enum MarkerState {
 })
 export class Dashboard {
   public chartType: ChartType = 'line';
-  //@ViewChild('chart', { static: false }) chart: UIChart;
+
   @ViewChild(BaseChartDirective) chart!: BaseChartDirective;
 
   constructor (private sharedObject: Sharedobject) {
     sharedObject.DashboardObject=this;
-
+    afterNextRender(async () => {
+      const zoomPlugin = (await import('chartjs-plugin-zoom')).default;
+      console.log (zoomPlugin);
+      Chart.register(zoomPlugin);
+    });
   }
   // Expose the plugin to the template
   
@@ -35,13 +40,13 @@ export class Dashboard {
   // import { Chart, ScatterController, PointElement, LineElement, LinearScale, Tooltip, Legend } from 'chart.js';
   // Chart.register(ScatterController, PointElement, LineElement, LinearScale, Tooltip, Legend);
 
-public yCategories: string[]= ['','?', '?', '?', '?',''];
+public yCategories: string[]= ['','tMR0','tMR1','isr0','isr1',''];//['','?', '?', '?', '?',''];
 public chartData: ChartData<'scatter'> = {
   datasets: [
     {
       label: '',
-      data: [],
-      /*data: [
+      //data: [],
+      data: [
         { x: 50, y: 1 },
         { x: 550, y: 1 },
          { x: null, y: null },
@@ -50,9 +55,6 @@ public chartData: ChartData<'scatter'> = {
         { x: null, y: null },
         { x: 400, y: 2 },
         { x: 600, y: 2 },
-        { x: null, y: null },
-         { x: 450, y: 1 },
-        { x: 500, y: 1 },
         { x: null, y: null },
         { x: 800, y: 2 },
         { x: 1000, y: 2 },
@@ -64,7 +66,7 @@ public chartData: ChartData<'scatter'> = {
         { x: 945, y: 3},
         { x: null, y: null },
         { x: 395, y: 4},
-      ],*/
+      ],
       // 1. Enable the line
       showLine: true,
 
@@ -108,6 +110,23 @@ public chartData: ChartData<'scatter'> = {
         },
         grid: {
           color: '#cac8c8', // X-axis grid lines
+        }
+      }
+    },
+    plugins: {
+      zoom: {
+        pan: {
+          enabled: true,
+          mode: 'x', // 'x', 'y', or 'xy'
+        },
+        zoom: {
+          wheel: {
+            enabled: true, // Zoom using mouse wheel
+          },
+          pinch: {
+            enabled: true  // Zoom using touch gestures
+          },
+          mode: 'x',
         }
       }
     }
@@ -188,7 +207,7 @@ public chartData: ChartData<'scatter'> = {
     }
   }
 
-  public chartPlugins: Plugin[] = [this.timingHighlightPlugin];
+  public chartPlugins: Plugin[] = [];//this.timingHighlightPlugin];
 
   private drawLine (ctx : any, fromX : number, fromY: number, toX : number, toY : number, color : string, width : number, dash : boolean)
   {
