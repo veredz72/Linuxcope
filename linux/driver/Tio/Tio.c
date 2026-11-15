@@ -1,13 +1,11 @@
-#include <linux/init.h>
+
 #include <linux/module.h>
-#include "../../common/TioIoctl.h"
-#include <linux/io.h>
-#include <linux/fs.h>
-#include <linux/wait.h>
-#include <linux/sched.h>
-#include <linux/cdev.h>
+#include <linux/hrtimer.h>
+#include <linux/kernel.h>
 #include <linux/device.h>
-#include <linux/platform_device.h>
+#include <linux/ktime.h>
+
+#include "../../common/TioIoctl.h"
 
 MODULE_LICENSE("Dual BSD/GPL");
 
@@ -19,21 +17,30 @@ int sMajorNumber;
 struct class *sCharClass;
 struct device *sCharDevice;
 
+#define FILE_PATH			"/mnt/ramdisk/tio.bin"
 
 #define NUM_CHANNELS 2
 #define DEVICE_NAME "tio"
 #define CLASS_NAME "tio"
 
-struct channel_dev {
-    int channel_id;
-    int interval_ms;
-    unsigned long tick_count;
-    struct timer_list timer;
+static u32 PERIOD_NS [2] = { (1000LL * 1000LL), (2500LL * 1000LL)};/* 1 ms = 1,000,000 ns */
+
+struct rt_timer_ctx {
+    struct hrtimer timer;
+    int id;                 /* e.g., 0 for Timer0, 1 for Timer1 */
+    ktime_t period_kt;      /* Individual period for this timer */
+    /* Add wait_queue_head_t, atomic_t event_flag, etc. per instance here */
 };
 
-/* Two independent channel instances */
-static struct channel_dev channels[NUM_CHANNELS];
+static struct rt_timer_ctx timers[2];
 
+/*********************************************************************************/
+static int LinuxcopeLogEvent (uint32_t Id, uint32_t Value, uint64_t Timetag)
+{		
+	printk ("%d,%lld\n",Id*2, Timetag);
+	
+	return 0;
+}
 
 /**********************************************************************************/
 static long TioIoctl (struct file *file,unsigned int IoctlCode,unsigned long IoctlParam)
@@ -82,20 +89,19 @@ static struct file_operations sDrvOperations =
 };
 
 /**********************************************************************************/
-static void TioTimerCallback (struct timer_list *t)
+static enum hrtimer_restart TioTimerCallback (struct hrtimer *t)
 {
-    	// from_timer recovers the specific struct channel_dev that owns *t */
-	struct channel_dev *chan = from_timer(chan, t, timer);
-	int TmrId = chan->channel_id;
-	
-	wake_up_interruptible(&sWaitQueue[TmrId]);
-	sInterruptFlag[TmrId] = 1;
-	
-    chan->tick_count++;
-    //printk("Channel %d expired! Tick count: %lu\n",TmrId, chan->tick_count);
-
-    // Re-arm using each channel's independent period */
-    mod_timer(&chan->timer, jiffies + msecs_to_jiffies(chan->interval_ms));
+    struct rt_timer_ctx *ctx = container_of(t, struct rt_timer_ctx, timer);
+    u32 TmrId = ctx->id;
+    
+    LinuxcopeLogEvent (TmrId, 0, ktime_get_real_ns());
+    
+    wake_up_interruptible (&sWaitQueue[TmrId]);
+    sInterruptFlag[TmrId]=1;
+    
+    hrtimer_forward_now(t, ctx->period_kt);
+    
+    return HRTIMER_RESTART;
 }
 
 /**********************************************************************************/
@@ -110,7 +116,7 @@ static int TioInit(void)
 		return -1;
 	}
 	
-	sCharClass = class_create(THIS_MODULE, CLASS_NAME);
+	sCharClass = class_create(CLASS_NAME); //U20.04: THIS_MODULE, CLASS_NAME
 	if (IS_ERR(sCharClass))
 	{
 		printk("TioInit: class_create failed rc=%ld\n",PTR_ERR(sCharClass));
@@ -126,23 +132,16 @@ static int TioInit(void)
 		return PTR_ERR(sCharClass);
 	}
 	
-	// Channel 0: 500 ms interval */
-	channels[0].channel_id = 0;
-	channels[0].interval_ms = 500;
-	channels[0].tick_count = 0;
-
-	// Channel 1: 1500 ms interval */
-	channels[1].channel_id = 1;
-	channels[1].interval_ms = 1500;
-	channels[1].tick_count = 0;
-    	
 	for (i = 0; i < NUM_CHANNELS; i++) {
 		init_waitqueue_head(&sWaitQueue[i]);
-        	timer_setup(&channels[i].timer, TioTimerCallback, 0);
-        	mod_timer(&channels[i].timer, jiffies + msecs_to_jiffies(channels[i].interval_ms));
+        	
+		/* Timer 0: 1 ms period */
+    		timers[i].id = i;
+    		timers[i].period_kt = ns_to_ktime(PERIOD_NS[i]);
+    		hrtimer_setup(&timers[i].timer, TioTimerCallback, CLOCK_MONOTONIC, HRTIMER_MODE_REL_HARD);
+		hrtimer_start(&timers[i].timer, timers[i].period_kt, HRTIMER_MODE_REL_HARD);
     	}
-
-
+		
  	return 0;
 }
 
@@ -150,9 +149,9 @@ static int TioInit(void)
 static void TioExit(void)
 {
 	int i;
-	
+		
     	for (i = 0; i < NUM_CHANNELS; i++) {
-        	timer_delete_sync(&channels[i].timer);
+        	hrtimer_cancel(&timers[i].timer);
     	}
  
 	device_destroy(sCharClass, MKDEV(sMajorNumber, 0));
